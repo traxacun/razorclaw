@@ -8,13 +8,14 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import ucl.GAE.razorclaw.object.Dictionaries.*;
+import ucl.GAE.razorclaw.parse.OpenNLPPOSTagger;
 import ucl.GAE.razorclaw.parse.OpenNLPTokenizer;
 import ucl.GAE.razorclaw.parse.PorterStemmer;
 import ucl.GAE.razorclaw.parse.StopwordsHandler;
 import ucl.GAE.razorclaw.parse.TextUtils;
 
 public class Webpage {
-    private Metadata _meta;
+    private WebpageMeta _meta;
 
     private ArrayList<Phrase> _phrases = new ArrayList<Phrase>();
 
@@ -28,37 +29,9 @@ public class Webpage {
 
     private int _phrases_count = 0;
 
-    public Metadata getMeta() {
-	return _meta;
-    }
-
-    public void setMeta(Metadata _meta) {
-	this._meta = _meta;
-    }
-
-    public String getUrl() {
-	return _url;
-    }
-
-    public void setUrl(String _url) {
-	this._url = _url;
-    }
-
-    public Status getStatus() {
-	return _status;
-    }
-
-    public void setStatus(Status _status) {
-	this._status = _status;
-    }
-
     public void parseHTML() {
-	// load metadata
-	_meta = new Metadata();
-	_meta.parseHTML(_html);
-
 	// load body
-	Element body = _html.body();
+	Element body = getHtml().body();
 
 	// tokenize to sentences
 	OpenNLPTokenizer.init();
@@ -72,19 +45,19 @@ public class Webpage {
 		p = TextUtils.removePunctuation(p);
 		p = TextUtils.removeNonAlphabeticChars(p);
 		p = p.toLowerCase().trim();
-		
+
 		if (p != null && !p.isEmpty() && p.length() > 0) {
 		    mid.add(new Phrase(p));
 		}
 	    }
 	}
-	// remove stopwords	
+	// remove stopwords
 	for (Phrase p : mid) {
 	    if (StopwordsHandler.isStopwords(p.getPhrase())) {
 
 	    } else {
 		// stem
-		PorterStemmer stemmer = new PorterStemmer();		
+		PorterStemmer stemmer = new PorterStemmer();
 		p.setPhrase(stemmer.stem(p.getPhrase()));
 		_phrases.add(p);
 		// total count
@@ -112,36 +85,68 @@ public class Webpage {
 	    }
 	}
 
-	// TF
-	this.calcTF();
+	// tag part-of-speech, TF
+	for (Phrase p : _phrases) {
+	    p.setPOS(OpenNLPPOSTagger.getWordTag(p.getPhrase()));
+
+	    p.setTF((double) p.getOccurance() / _phrases_count);
+	}
+
+	// load metadata
+	_meta = new WebpageMeta();
+	_meta.parseHTML(getHtml());
+	for (String s : _meta.getTitle()) {
+	    int idx = _phrases.indexOf(new Phrase(s));
+	    if (idx == -1) {
+
+	    } else {
+		_phrases.get(idx).setInTitle(true);
+	    }
+	}
+	for (String s : _meta.getKeywords()) {
+	    int idx = _phrases.indexOf(new Phrase(s));
+	    if (idx == -1) {
+
+	    } else {
+		_phrases.get(idx).setInKeywords(true);
+	    }
+	}
+	for (String s : _meta.getDescription()) {
+	    int idx = _phrases.indexOf(new Phrase(s));
+	    if (idx == -1) {
+
+	    } else {
+		_phrases.get(idx).setInDescription(true);
+	    }
+	}
+    }
+
+    // -----------------------getters and setters---------------------
+    public WebpageMeta getMeta() {
+	return _meta;
+    }
+
+    public String getUrl() {
+	return _url;
+    }
+
+    public Status getStatus() {
+	return _status;
     }
 
     public Document getHtml() {
 	return _html;
     }
 
-    public void setHtml(Document _html) {
-	this._html = _html;
-    }
-
     public String[] getSentences() {
 	return _sentences;
-    }
-
-    public void setPhrases(ArrayList<Phrase> _phrases) {
-	this._phrases = _phrases;
     }
 
     public ArrayList<Phrase> getPhrases() {
 	return _phrases;
     }
 
-    /**
-     * calculate TF.
-     */
-    public void calcTF() {
-	for (Phrase p : _phrases) {
-	    p.setTF((double) p.getOccurance() / _phrases_count);
-	}
+    public void setHtml(Document _html) {
+	this._html = _html;
     }
 }

@@ -18,8 +18,8 @@ public class Phrase implements Comparable<Phrase> {
      * public Phrase(List<? extends Word> words) { _words = words; }
      */
 
-    public Phrase(String p) {
-	_phrase = p;
+    public Phrase(String s) {
+	_phrase = s;
     }
 
     public void setCaseSensitive(boolean isCaseSentitive) {
@@ -56,9 +56,16 @@ public class Phrase implements Comparable<Phrase> {
 
     private String _phrase;
 
+    // features list
     private int _occurance = 1;
 
     private double _tf = 0.0, _idf = 0.0, _tf_idf = 0.0;
+
+    private String _pos;
+
+    private boolean _inTitle = false, _inKeywords = false, _inDescription = false;
+
+    // features list ends
 
     @Override
     public int compareTo(Phrase o) {
@@ -141,8 +148,48 @@ public class Phrase implements Comparable<Phrase> {
 	sb.append(_occurance);
 	sb.append(", ");
 	sb.append(f.format(_tf));
+	sb.append(", ");
+	sb.append(_pos);
+	sb.append(", ");
+	sb.append(_inTitle);
+	sb.append(", ");
+	sb.append(_inKeywords);
+	sb.append(", ");
+	sb.append(_inDescription);
 
 	return sb.toString();
+    }
+
+    public void setPOS(String _pos) {
+	this._pos = _pos;
+    }
+
+    public String getPOS() {
+	return _pos;
+    }
+
+    public void setInTitle(boolean _inTitle) {
+	this._inTitle = _inTitle;
+    }
+
+    public boolean isInTitle() {
+	return _inTitle;
+    }
+
+    public void setInKeywords(boolean _inKeywords) {
+	this._inKeywords = _inKeywords;
+    }
+
+    public boolean isInKeywords() {
+	return _inKeywords;
+    }
+
+    public void setInDescription(boolean _inDescription) {
+	this._inDescription = _inDescription;
+    }
+
+    public boolean isInDescription() {
+	return _inDescription;
     }
 
 }

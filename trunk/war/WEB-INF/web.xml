@@ -5,12 +5,36 @@ xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
 http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 	<servlet>
-		<servlet-name>GAE_crawl</servlet-name>
-		<servlet-class>ucl.GAE.razorclaw.crawl.GAE_crawlServlet</servlet-class>
+		<servlet-name>GAE_razorclaw</servlet-name>
+		<servlet-class>ucl.GAE.razorclaw.servlet.Main</servlet-class>
 	</servlet>
 	<servlet-mapping>
-		<servlet-name>GAE_crawl</servlet-name>
-		<url-pattern>/gae_crawl</url-pattern>
+		<servlet-name>GAE_razorclaw</servlet-name>
+		<url-pattern>/gae_razorclaw</url-pattern>
+	</servlet-mapping>
+		<servlet>
+		<servlet-name>CrawlTaskHandler</servlet-name>
+		<servlet-class>ucl.GAE.razorclaw.servlet.CrawlTaskHandler</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>CrawlTaskHandler</servlet-name>
+		<url-pattern>/CrawlTaskHandler</url-pattern>
+	</servlet-mapping>
+		<servlet>
+		<servlet-name>ParseTaskHandler</servlet-name>
+		<servlet-class>ucl.GAE.razorclaw.servlet.ParseTaskHandler</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>ParseTaskHandler</servlet-name>
+		<url-pattern>/ParseTaskHandler</url-pattern>
+	</servlet-mapping>
+		<servlet>
+		<servlet-name>CalcTaskHandler</servlet-name>
+		<servlet-class>ucl.GAE.razorclaw.servlet.CalcTaskHandler</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>CalcTaskHandler</servlet-name>
+		<url-pattern>/CalcTaskHandler</url-pattern>
 	</servlet-mapping>
 	<welcome-file-list>
 		<welcome-file>index.html</welcome-file>
