@@ -1,6 +1,32 @@
 package ucl.GAE.razorclaw.object;
 
 public class Dictionaries {
+    public enum PartOfSpeech {
+	ADJECTIVE,
+	ADVERB,
+	DETERMINER,
+	FOREIGNWORD,
+	NOUN,
+	NUMBER,
+	PREPOSITION,
+	PRONOUN,
+	PROPERNOUN,
+	QUALIFIER,
+	STOPWORD,
+	SYMBOL,
+	UNSPECIFIED,
+	VERB;
+
+	public static PartOfSpeech load(String tag) {
+	    try {
+		return (PartOfSpeech) Enum.valueOf(PartOfSpeech.class,
+			tag.toUpperCase());
+	    } catch (IllegalArgumentException iae) {
+		return PartOfSpeech.UNSPECIFIED;
+	    }
+	}
+    }
+
     public static enum HtmlVersion {
 	HTML2,
 	HTML3,
@@ -85,5 +111,18 @@ public class Dictionaries {
 	PARSING,
 	EXTRACTING,
 	FINISHED
+    }
+
+    public static enum CountryCode {
+	UNSPECIFIED;
+
+	public static CountryCode load(String tag) {
+	    try {
+		return (CountryCode) Enum.valueOf(CountryCode.class,
+			tag.toUpperCase());
+	    } catch (IllegalArgumentException iae) {
+		return CountryCode.UNSPECIFIED;
+	    }
+	}
     }
 }
