@@ -1,9 +1,11 @@
 package ucl.GAE.razorclaw.object;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
@@ -14,8 +16,15 @@ import ucl.GAE.razorclaw.parse.PorterStemmer;
 import ucl.GAE.razorclaw.parse.StopwordsHandler;
 import ucl.GAE.razorclaw.parse.TextUtils;
 
-public class Webpage {
-    private WebpageMeta _meta;
+public class Webpage implements Serializable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -3083386200240092000L;
+
+    private WebpageMeta _webpageMeta; // parsed from _document
+
+    private APIMeta _apiMeta;
 
     private ArrayList<Phrase> _phrases = new ArrayList<Phrase>();
 
@@ -25,13 +34,17 @@ public class Webpage {
 
     private Status _status;
 
-    private Document _html;
+//    private Document _document;
+
+    private String _html;
 
     private int _phrases_count = 0;
 
     public void parseHTML() {
 	// load body
-	Element body = getHtml().body();
+	Document doc = Jsoup.parse(_html);
+	
+	Element body = doc.body();
 
 	// tokenize to sentences
 	OpenNLPTokenizer.init();
@@ -93,9 +106,10 @@ public class Webpage {
 	}
 
 	// load metadata
-	_meta = new WebpageMeta();
-	_meta.parseHTML(getHtml());
-	for (String s : _meta.getTitle()) {
+	_webpageMeta = new WebpageMeta();
+	_webpageMeta.parseMeta(doc);
+	
+	for (String s : _webpageMeta.getTitle()) {
 	    int idx = _phrases.indexOf(new Phrase(s));
 	    if (idx == -1) {
 
@@ -103,7 +117,7 @@ public class Webpage {
 		_phrases.get(idx).setInTitle(true);
 	    }
 	}
-	for (String s : _meta.getKeywords()) {
+	for (String s : _webpageMeta.getKeywords()) {
 	    int idx = _phrases.indexOf(new Phrase(s));
 	    if (idx == -1) {
 
@@ -111,7 +125,7 @@ public class Webpage {
 		_phrases.get(idx).setInKeywords(true);
 	    }
 	}
-	for (String s : _meta.getDescription()) {
+	for (String s : _webpageMeta.getDescription()) {
 	    int idx = _phrases.indexOf(new Phrase(s));
 	    if (idx == -1) {
 
@@ -123,7 +137,7 @@ public class Webpage {
 
     // -----------------------getters and setters---------------------
     public WebpageMeta getMeta() {
-	return _meta;
+	return _webpageMeta;
     }
 
     public String getUrl() {
@@ -134,10 +148,6 @@ public class Webpage {
 	return _status;
     }
 
-    public Document getHtml() {
-	return _html;
-    }
-
     public String[] getSentences() {
 	return _sentences;
     }
@@ -146,7 +156,19 @@ public class Webpage {
 	return _phrases;
     }
 
-    public void setHtml(Document _html) {
+    public void setHtml(String _html) {
 	this._html = _html;
+    }
+
+    public void setAPIMeta(APIMeta _apiMeta) {
+	this._apiMeta = _apiMeta;
+    }
+
+    public APIMeta getAPIMeta() {
+	return _apiMeta;
+    }
+
+    public void setStatus(Status _status) {
+	this._status = _status;
     }
 }
