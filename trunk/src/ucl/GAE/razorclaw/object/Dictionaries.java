@@ -1,6 +1,13 @@
 package ucl.GAE.razorclaw.object;
 
-public class Dictionaries {
+import java.io.Serializable;
+
+public class Dictionaries implements Serializable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -3427555974625415756L;
+
     public enum PartOfSpeech {
 	ADJECTIVE,
 	ADVERB,
@@ -106,11 +113,14 @@ public class Dictionaries {
      * 
      */
     public static enum Status {
-	PENDING,
+	PENDING, // job added
 	CRAWLING,
+	CRAWLED,
 	PARSING,
-	EXTRACTING,
-	FINISHED
+	PARSED,
+	RANKING,
+	RANKED,
+	FINISHED // keyword updated
     }
 
     public static enum CountryCode {
