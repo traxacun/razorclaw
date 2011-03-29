@@ -1,4 +1,4 @@
-package ucl.GAE.razorclaw.object;
+package razorclaw.object;
 
 import java.io.Serializable;
 import java.util.ArrayList;

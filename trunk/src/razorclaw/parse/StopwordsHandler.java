@@ -1,4 +1,4 @@
-package ucl.GAE.razorclaw.parse;
+package razorclaw.parse;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

@@ -1,4 +1,4 @@
-package ucl.GAE.razorclaw.object;
+package razorclaw.object;
 
 import java.text.DecimalFormat;
 import java.util.Comparator;
@@ -11,19 +11,24 @@ import java.util.List;
  * 
  */
 public class Phrase implements Comparable<Phrase> {
-    // private List<? extends Word> _words;
+
     private boolean _isCaseSentitive = false;
 
-    /*
-     * public Phrase(List<? extends Word> words) { _words = words; }
-     */
+    private int _occurance = 1;
+
+    private double _tf = 0.0, _idf = 0.0, _tf_idf = 0.0;
+
+    private String _pos;
+
+    private boolean _inTitle = false, _inKeywords = false,
+	    _inDescription = false;
 
     public Phrase(String s) {
 	_phrase = s;
     }
-
-    public void setCaseSensitive(boolean isCaseSentitive) {
-	_isCaseSentitive = isCaseSentitive;
+    
+    public Phrase(){
+	
     }
 
     /*
@@ -56,17 +61,28 @@ public class Phrase implements Comparable<Phrase> {
 
     private String _phrase;
 
-    // features list
-    private int _occurance = 1;
+    public String toString() {
+	DecimalFormat f = new DecimalFormat("#.####");
 
-    private double _tf = 0.0, _idf = 0.0, _tf_idf = 0.0;
+	StringBuilder sb = new StringBuilder();
+	sb.append(_phrase);
+	sb.append(": ");
+	sb.append(_occurance);
+	sb.append(", ");
+	sb.append(f.format(_tf));
+	sb.append(", ");
+	sb.append(_pos);
+	sb.append(", ");
+	sb.append(_inTitle);
+	sb.append(", ");
+	sb.append(_inKeywords);
+	sb.append(", ");
+	sb.append(_inDescription);
 
-    private String _pos;
+	return sb.toString();
+    }
 
-    private boolean _inTitle = false, _inKeywords = false, _inDescription = false;
-
-    // features list ends
-
+    // ----------------------comparator--------------------------
     @Override
     public int compareTo(Phrase o) {
 	//
@@ -95,6 +111,7 @@ public class Phrase implements Comparable<Phrase> {
 	}
     }
 
+    // ----------------------getter and setter--------------------
     public void setPhrase(String _phrase) {
 	this._phrase = _phrase;
     }
@@ -139,27 +156,6 @@ public class Phrase implements Comparable<Phrase> {
 	this._occurance++;
     }
 
-    public String toString() {
-	DecimalFormat f = new DecimalFormat("#.####");
-
-	StringBuilder sb = new StringBuilder();
-	sb.append(_phrase);
-	sb.append(": ");
-	sb.append(_occurance);
-	sb.append(", ");
-	sb.append(f.format(_tf));
-	sb.append(", ");
-	sb.append(_pos);
-	sb.append(", ");
-	sb.append(_inTitle);
-	sb.append(", ");
-	sb.append(_inKeywords);
-	sb.append(", ");
-	sb.append(_inDescription);
-
-	return sb.toString();
-    }
-
     public void setPOS(String _pos) {
 	this._pos = _pos;
     }
@@ -192,4 +188,7 @@ public class Phrase implements Comparable<Phrase> {
 	return _inDescription;
     }
 
+    public void setCaseSensitive(boolean isCaseSentitive) {
+	_isCaseSentitive = isCaseSentitive;
+    }
 }

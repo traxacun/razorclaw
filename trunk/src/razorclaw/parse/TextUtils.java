@@ -1,4 +1,4 @@
-package ucl.GAE.razorclaw.parse;
+package razorclaw.parse;
 
 import java.util.regex.Pattern;
 

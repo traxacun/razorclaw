@@ -1,4 +1,4 @@
-package ucl.GAE.razorclaw.linguistic.pos;
+package razorclaw.linguistic.pos;
 
 public enum OpenCalaisEntityTag 
 {

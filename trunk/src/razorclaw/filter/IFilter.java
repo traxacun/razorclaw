@@ -1,4 +1,4 @@
-package ucl.GAE.razorclaw.filter;
+package razorclaw.filter;
 
 public interface IFilter 
 {
