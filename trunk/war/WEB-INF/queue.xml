@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <queue-entries>
-<queue>
-<name>default</name>
-<rate>5/s</rate>
-</queue>
-<queue>
-<name>crawl-queue</name>
-<rate>5/s</rate>
-</queue>
-<queue>
-<name>parse-queue</name>
-<rate>5/s</rate>
-</queue>
-<queue>
-<name>rank-queue</name>
-<rate>5/s</rate>
-</queue>
+	<queue>
+		<name>default</name>
+		<rate>5/s</rate>
+	</queue>
+	<queue>
+		<name>crawl-queue</name>
+		<rate>5/s</rate>
+	</queue>
+	<queue>
+		<name>parse-queue</name>
+		<rate>5/s</rate>
+	</queue>
+	<queue>
+		<name>rank-queue</name>
+		<rate>5/s</rate>
+	</queue>
 </queue-entries>
