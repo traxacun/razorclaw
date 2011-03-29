@@ -1,4 +1,4 @@
-package ucl.GAE.razorclaw.servlet;
+package razorclaw.servlet;
 
 import javax.servlet.http.HttpServlet;
 
