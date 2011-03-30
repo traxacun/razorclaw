@@ -5,16 +5,16 @@
 http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 	version="2.5">
 	<servlet>
-		<servlet-name>GAE_razorclaw</servlet-name>
-		<servlet-class>ucl.GAE.razorclaw.servlet.Main</servlet-class>
+		<servlet-name>razorclaw</servlet-name>
+		<servlet-class>razorclaw.servlet.Main</servlet-class>
 	</servlet>
 	<servlet-mapping>
-		<servlet-name>GAE_razorclaw</servlet-name>
-		<url-pattern>/gae_razorclaw</url-pattern>
+		<servlet-name>razorclaw</servlet-name>
+		<url-pattern>/razorclaw</url-pattern>
 	</servlet-mapping>
 	<servlet>
 		<servlet-name>CrawlTaskHandler</servlet-name>
-		<servlet-class>ucl.GAE.razorclaw.servlet.CrawlTaskHandler</servlet-class>
+		<servlet-class>razorclaw.servlet.CrawlTaskHandler</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>CrawlTaskHandler</servlet-name>
@@ -22,7 +22,7 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 	</servlet-mapping>
 	<servlet>
 		<servlet-name>ParseTaskHandler</servlet-name>
-		<servlet-class>ucl.GAE.razorclaw.servlet.ParseTaskHandler</servlet-class>
+		<servlet-class>razorclaw.servlet.ParseTaskHandler</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>ParseTaskHandler</servlet-name>
@@ -30,7 +30,7 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 	</servlet-mapping>
 	<servlet>
 		<servlet-name>RankTaskHandler</servlet-name>
-		<servlet-class>ucl.GAE.razorclaw.servlet.RankTaskHandler</servlet-class>
+		<servlet-class>razorclaw.servlet.RankTaskHandler</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>RankTaskHandler</servlet-name>

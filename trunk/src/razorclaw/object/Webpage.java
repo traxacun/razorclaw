@@ -17,6 +17,13 @@ import razorclaw.parse.StopwordsHandler;
 import razorclaw.parse.TextUtils;
 
 
+/**
+ * represents a webpage crawled from a dot.tk domain
+ * NOTE: there could be multiple dot.tk domains pointing to the same webpage
+ * 
+ * @author Shuai YUAN
+ *
+ */
 public class Webpage implements Serializable {
     /**
      * 
@@ -25,19 +32,15 @@ public class Webpage implements Serializable {
 
     private WebpageMeta _webpageMeta; // parsed from _document
 
-    private APIMeta _apiMeta;
+    private APIMeta _apiMeta; // parsed from stats.tk API
 
     private ArrayList<Phrase> _phrases = new ArrayList<Phrase>();
 
     private String[] _sentences;
 
-    private String _url;
-
     private Status _status;
 
-    // private Document _document;
-
-    private String _html;
+    private String _html; // store HTML string instead of DOM to implement Serializable
 
     private int _phrases_count = 0;
 
@@ -142,10 +145,6 @@ public class Webpage implements Serializable {
     // -----------------------getters and setters---------------------
     public WebpageMeta getMeta() {
 	return _webpageMeta;
-    }
-
-    public String getUrl() {
-	return _url;
     }
 
     public Status getStatus() {

@@ -3,6 +3,8 @@ package razorclaw.servlet;
 import java.io.IOException;
 import javax.servlet.http.*;
 
+import razorclaw.datastore.DomainStoreHandler;
+
 import com.google.appengine.api.labs.taskqueue.*;
 
 @SuppressWarnings("serial")
@@ -10,16 +12,18 @@ public class Main extends HttpServlet {
     @SuppressWarnings("deprecation")
     public void doGet(HttpServletRequest req, HttpServletResponse resp)
 	    throws IOException {
-	try {
-	    Queue queue = QueueFactory.getQueue("crawl-queue");
-	    queue.add(TaskOptions.Builder.url("/CrawlTaskHandler").param(
-		    "domain", "chomeo.tk"));
-
-	    resp.getWriter()
-		    .println("Successfully created a Task in the Queue");
-	} catch (Exception ex) {
-	    ex.printStackTrace();
-	}
+//	try {
+//	    Queue queue = QueueFactory.getQueue("crawl-queue");
+//	    queue.add(TaskOptions.Builder.url("/CrawlTaskHandler").param(
+//		    "domain", "chomeo.tk"));
+//
+//	    resp.getWriter()
+//		    .println("Successfully created a Task in the Queue");
+//	} catch (Exception ex) {
+//	    ex.printStackTrace();
+//	}
+	
+	DomainStoreHandler.test();
 
 	// resp.setContentType("text/plain");
 	// resp.getWriter().println("Hello, world");
