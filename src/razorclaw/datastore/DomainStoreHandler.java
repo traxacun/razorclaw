@@ -9,9 +9,7 @@ import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
-import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
-import com.sun.corba.se.spi.activation._ActivatorImplBase;
 
 /**
  * save or load dot.tk domain entities from datastore the structure is
@@ -59,7 +57,7 @@ public class DomainStoreHandler {
     /**
      * local cache
      */
-    private static HashMap<String, ArrayList<DomainPair>> _cache = new HashMap<String, ArrayList<DomainPair>>();
+    private static HashMap<String, ArrayList<DomainPair>> _cache;
 
     private static int _accessCounter = 0;
 
@@ -81,28 +79,6 @@ public class DomainStoreHandler {
 	} else {
 	    return true;
 	}
-    }
-
-    /**
-     * get all dot.tk domains for the given webpage(forwardURL)
-     * 
-     * @param forwardURL
-     * @return
-     */
-    private static ArrayList<String> getFromDS(String forwardURL) {
-	Entity pageEntity = new Entity("ForwardURL", forwardURL);
-	Query query = new Query("Domain");
-	query.setAncestor(pageEntity.getKey());
-
-	List<Entity> queryResult = _datastore.prepare(query).asList(
-		FetchOptions.Builder.withDefaults());
-
-	ArrayList<String> results = new ArrayList<String>();
-	for (Entity e : queryResult) {
-	    results.add((String) e.getProperty("name"));
-	}
-
-	return results;
     }
 
     /**
@@ -130,6 +106,8 @@ public class DomainStoreHandler {
      * @return
      */
     public static long getDocumentsNumber() {
+	return _cache.size();
+	/*
 	Query query = new Query("__Stat_Kind__");
 
 	List<Entity> result = _datastore.prepare(query).asList(
@@ -150,39 +128,47 @@ public class DomainStoreHandler {
 	    }
 	}
 
-	return 0;
+	return 0;*/
     }
 
     /**
      * load cache from datastore
      */
     private static void load() {
-	_cache.clear();
+	_cache = new HashMap<String, ArrayList<DomainPair>>();
 
 	Query query = new Query("Domain");
 	List<Entity> result = _datastore.prepare(query).asList(
 		FetchOptions.Builder.withDefaults());
-	if (!result.isEmpty()) {
+	if (result != null) {
 	    String forwardURL = "";
 	    ArrayList<DomainPair> domains = null;
 
 	    for (Entity e : result) {
-		if (forwardURL.equals(null)) {
-		    forwardURL = e.getKey().getName();
+		if (forwardURL == null || forwardURL.isEmpty()) {
+		    forwardURL = e.getParent().getName();
 
 		    domains = new ArrayList<DomainPair>();
 		    domains.add(new DomainPair((String) e.getProperty("name"),
 			    false));
-		} else if (forwardURL.equals(e.getKey().getName())) {
+		    
+		    System.out.println("new forwardURL: " + forwardURL);
+		    System.out.println("new domain: " + e.getProperty("name"));
+		} else if (forwardURL.equals(e.getParent().getName())) {
 		    domains.add(new DomainPair((String) e.getProperty("name"),
 			    false));
-		} else if (!forwardURL.equals(e.getKey().getName())) {
+		    
+		    System.out.println("new domain: " + e.getProperty("name"));
+		} else if (!forwardURL.equals(e.getParent().getName())) {
 		    _cache.put(forwardURL, domains);
 
-		    forwardURL = e.getKey().getName();
-		    domains.clear();
+		    forwardURL = e.getParent().getName();
+		    domains = new ArrayList<DomainStoreHandler.DomainPair>();
 		    domains.add(new DomainPair((String) e.getProperty("name"),
 			    false));
+		    
+		    System.out.println("new forwardURL: " + forwardURL);
+		    System.out.println("new domain: " + e.getProperty("name"));
 		}
 	    }
 
@@ -215,7 +201,7 @@ public class DomainStoreHandler {
 	ArrayList<String> result = new ArrayList<String>();
 
 	ArrayList<DomainPair> domains = _cache.get(forwardURL);
-	if (!domains.isEmpty()) {
+	if (domains != null) {
 	    for (DomainPair dp : domains) {
 		result.add(dp.getDomain());
 	    }
@@ -234,7 +220,9 @@ public class DomainStoreHandler {
      */
     public static void put(String forwardURL, String domain) {
 	ArrayList<DomainPair> domains = _cache.get(forwardURL);
-	if (domains.isEmpty()) {
+	
+	if (domains == null) {
+	    domains = new ArrayList<DomainStoreHandler.DomainPair>();
 	    domains.add(new DomainPair(domain, true));
 	    _cache.put(forwardURL, domains);
 	} else {
@@ -267,14 +255,36 @@ public class DomainStoreHandler {
 	// DomainStoreHandler.put("forwardURL2", "domain21");
 	// DomainStoreHandler.put("forwardURL2", "domain22");
 	// DomainStoreHandler.put("forwardURL2", "domain23");
+	
+	load();
+	
+	DomainStoreHandler.put("forwardURL3", "domain31");
+	DomainStoreHandler.put("forwardURL3", "domain32");
+	DomainStoreHandler.put("forwardURL3", "domain33");	
 
-	for (String s : DomainStoreHandler.getFromDS("forwardURL1")) {
+	for (String s : DomainStoreHandler.get("forwardURL1")) {
+	    System.out.println(s);
+	}
+	for (String s : DomainStoreHandler.get("forwardURL3")) {
 	    System.out.println(s);
 	}
 
 	System.out.println(DomainStoreHandler.getDocumentsNumber());
 
-	System.out.println(DomainStoreHandler.exists("forwardURL1"));
-	System.out.println(DomainStoreHandler.exists("forwardURL3"));
+//	System.out.println(DomainStoreHandler.exists("forwardURL1"));
+//	System.out.println(DomainStoreHandler.exists("forwardURL3"));
+	
+	//save();
+	
+	/*load();
+	
+	for (String s : DomainStoreHandler.get("forwardURL1")) {
+	    System.out.println(s);
+	}
+	for (String s : DomainStoreHandler.get("forwardURL3")) {
+	    System.out.println(s);
+	}
+
+	System.out.println(DomainStoreHandler.getDocumentsNumber());*/
     }
 }
