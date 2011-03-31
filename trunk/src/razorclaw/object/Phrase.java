@@ -13,61 +13,60 @@ import java.util.List;
  */
 public class Phrase implements Comparable<Phrase> {
 
-	private boolean _isCaseSentitive = false;
+    private boolean _isCaseSentitive = false;
 
-	private String _phrase;
-	
-	private ArrayList<PhraseProperty> _properties;
-	
-	private String _language, _code;
+    private String _phrase;
 
-	public Phrase(String s) {
-		_phrase = s;
-	}
+    private ArrayList<PhraseProperty> _properties = new ArrayList<PhraseProperty>();
 
-	public Phrase() {
+    private String _language, _code;
 
-	}
+    public Phrase(String s) {
+	_phrase = s;
+    }
 
-	@Override
-	public int hashCode() {
-		return getPhrase().hashCode();
-	}
+    public Phrase() {
+    }
 
-	@Override
-	public boolean equals(Object object) {
-		Phrase altPhrase = (Phrase) object;
-		if (_isCaseSentitive)
-			return altPhrase.getPhrase().equals(getPhrase());
-		return altPhrase.getPhrase().equalsIgnoreCase(getPhrase());
-	}
+    @Override
+    public int hashCode() {
+	return getPhrase().hashCode();
+    }
 
-	// ----------------------comparator--------------------------
-	@Override
-	public int compareTo(Phrase o) {
-		//
-		return getPhrase().compareTo(o.getPhrase());
+    @Override
+    public boolean equals(Object object) {
+	Phrase altPhrase = (Phrase) object;
+	if (_isCaseSentitive)
+	    return altPhrase.getPhrase().equals(getPhrase());
+	return altPhrase.getPhrase().equalsIgnoreCase(getPhrase());
+    }
 
-	}
+    // ----------------------comparator--------------------------
+    @Override
+    public int compareTo(Phrase o) {
+	//
+	return getPhrase().compareTo(o.getPhrase());
 
-	// ----------------------getter and setter--------------------
-	public void setPhrase(String _phrase) {
-		this._phrase = _phrase;
-	}
+    }
 
-	public String getPhrase() {
-		return _phrase;
-	}
+    // ----------------------getter and setter--------------------
+    public void setPhrase(String _phrase) {
+	this._phrase = _phrase;
+    }
 
-	public void setCaseSensitive(boolean isCaseSentitive) {
-		_isCaseSentitive = isCaseSentitive;
-	}
+    public String getPhrase() {
+	return _phrase;
+    }
 
-	public void setProperties(ArrayList<PhraseProperty> _properties) {
-		this._properties = _properties;
-	}
+    public void setCaseSensitive(boolean isCaseSentitive) {
+	_isCaseSentitive = isCaseSentitive;
+    }
 
-	public ArrayList<PhraseProperty> getProperties() {
-		return _properties;
-	}
+    public void setProperties(ArrayList<PhraseProperty> _properties) {
+	this._properties = _properties;
+    }
+
+    public ArrayList<PhraseProperty> getProperties() {
+	return _properties;
+    }
 }

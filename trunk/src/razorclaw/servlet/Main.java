@@ -12,18 +12,18 @@ public class Main extends HttpServlet {
     @SuppressWarnings("deprecation")
     public void doGet(HttpServletRequest req, HttpServletResponse resp)
 	    throws IOException {
-//	try {
-//	    Queue queue = QueueFactory.getQueue("crawl-queue");
-//	    queue.add(TaskOptions.Builder.url("/CrawlTaskHandler").param(
-//		    "domain", "chomeo.tk"));
-//
-//	    resp.getWriter()
-//		    .println("Successfully created a Task in the Queue");
-//	} catch (Exception ex) {
-//	    ex.printStackTrace();
-//	}
+	try {
+	    Queue queue = QueueFactory.getQueue("crawl-queue");
+	    queue.add(TaskOptions.Builder.url("/CrawlTaskHandler").param(
+		    "domain", "chomeo.tk"));
+
+	    resp.getWriter()
+		    .println("Successfully created a Task in the Queue");
+	} catch (Exception ex) {
+	    ex.printStackTrace();
+	}
 	
-	DomainStoreHandler.test();
+//	DomainStoreHandler.test();
 
 	// resp.setContentType("text/plain");
 	// resp.getWriter().println("Hello, world");
