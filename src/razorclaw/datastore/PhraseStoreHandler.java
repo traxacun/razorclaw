@@ -18,7 +18,7 @@ import razorclaw.object.Dictionaries.PartOfSpeech;
  * @author Shuai YUAN
  * 
  */
-public class PharseStoreHandler {
+public class PhraseStoreHandler {
 
     private static HashMap<String, ArrayList<PhraseProperty>> _cache;
 

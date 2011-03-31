@@ -5,32 +5,24 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import net.sf.jsr107cache.Cache;
+import net.sf.jsr107cache.CacheException;
+import net.sf.jsr107cache.CacheManager;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
+import razorclaw.datastore.DomainStoreHandler;
 import razorclaw.object.APIMeta;
 import razorclaw.object.Webpage;
-
-import com.google.appengine.api.labs.taskqueue.Queue;
-import com.google.appengine.api.labs.taskqueue.QueueFactory;
-import com.google.appengine.api.labs.taskqueue.TaskOptions;
-import com.google.appengine.api.urlfetch.*;
-
-import static com.google.appengine.api.urlfetch.FetchOptions.Builder.*;
-
-import net.sf.jsr107cache.Cache;
-import net.sf.jsr107cache.CacheException;
-import net.sf.jsr107cache.CacheManager;
-
 
 /**
  * invoke this handler to create a crawl task, which will download the webpage
@@ -39,6 +31,7 @@ import net.sf.jsr107cache.CacheManager;
  * @author Shuai YUAN
  * 
  */
+@SuppressWarnings("deprecation")
 public class CrawlTaskHandler extends HttpServlet {
 
     /**
@@ -56,30 +49,44 @@ public class CrawlTaskHandler extends HttpServlet {
 
     private Webpage _webpage; // content and metadata
 
+    /**
+     * stores <forwardURL, HTML> pair for further parsing and ranking
+     */
     private Cache _cache;
 
     private static final Logger LOG = Logger.getLogger(CrawlTaskHandler.class
 	    .getName());
 
+    @Override
     public void doPost(HttpServletRequest req, HttpServletResponse resp)
 	    throws IOException {
 	// parse parameters
 	if ((_domain = req.getParameter("domain").toLowerCase()) != null) {
 	    LOG.info("Received crawl request for domain: " + _domain);
 
-	    _webpage = new Webpage();
-
-	    crawlAPI();
-
-	    if (checkCache()) {
-		loadCache();
+	    // check if we already have the KeyPhrase for the given domain
+	    String keyPhrase;
+	    if ((keyPhrase = DomainStoreHandler.getKeyPhrase(_domain)) != null) {
+		// KeyPhrase exists
+		ReportTaskHandler.createReportTask(_domain, keyPhrase);
 	    } else {
-		crawlWebpage();
+		_webpage = new Webpage();
+		// get API metadata from stats.tk
+		crawlAPIMeta();
+		// if already holding the content of the webpage
+		if (checkCache()) {
+		    load();
+		} else {
+		    crawlWebpage();
 
-		saveResult();
+		    // save the result to cache
+		    save();
+		}
+		// we always create a parse task for the forwardURL. although
+		// the webpage may be already parsed, there would be different
+		// API metadata associated with the dot.tk domain
+		ParseTaskHandler.createParseTask(_forwardURL, _domain);
 	    }
-
-	    createParseTask();
 	} else {
 	    LOG.severe("Wrong parameter \"domain\"");
 	}
@@ -89,7 +96,7 @@ public class CrawlTaskHandler extends HttpServlet {
     /**
      * save the crawl result to memcache for parse, key=_domain, value=_webpage
      */
-    private void saveResult() {
+    private void save() {
 	LOG.info("Saving crawl result for next step");
 
 	try {
@@ -108,27 +115,9 @@ public class CrawlTaskHandler extends HttpServlet {
     }
 
     /**
-     * create a parse task after crawling
-     */
-    @SuppressWarnings("deprecation")
-    private void createParseTask() {
-	LOG.info("Creating parse task");
-
-	try {
-	    Queue queue = QueueFactory.getQueue("parse-queue");
-	    queue.add(TaskOptions.Builder.url("/ParseTaskHandler")
-		    .param("forwardURL", _forwardURL).param("domain", _domain));
-	} catch (Exception ex) {
-	    ex.printStackTrace();
-
-	    LOG.severe("Creating parse task failed");
-	}
-    }
-
-    /**
      * crawl metadata from stats.tk API
      */
-    private void crawlAPI() {
+    private void crawlAPIMeta() {
 	LOG.info("Crawling metadata from stats.tk API");
 
 	while (_forwardURL == null) {
@@ -196,7 +185,7 @@ public class CrawlTaskHandler extends HttpServlet {
 	}
     }
 
-    private void loadCache() {
+    private void load() {
 	LOG.info("Loading webpage cache");
 
 	try {

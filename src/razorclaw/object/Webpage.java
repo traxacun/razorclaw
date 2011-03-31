@@ -10,11 +10,11 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import razorclaw.object.Dictionaries.*;
-import razorclaw.parse.OpenNLPPOSTagger;
-import razorclaw.parse.OpenNLPTokenizer;
-import razorclaw.parse.PorterStemmer;
-import razorclaw.parse.StopwordsHandler;
-import razorclaw.parse.TextUtils;
+import razorclaw.parser.OpenNLPPOSTagger;
+import razorclaw.parser.OpenNLPTokenizer;
+import razorclaw.parser.PorterStemmer;
+import razorclaw.parser.StopwordsHandler;
+import razorclaw.parser.TextUtils;
 
 /**
  * represents a webpage crawled from a dot.tk domain NOTE: there could be

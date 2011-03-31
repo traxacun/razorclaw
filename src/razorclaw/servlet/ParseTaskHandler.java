@@ -8,17 +8,19 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import razorclaw.object.Webpage;
+import net.sf.jsr107cache.Cache;
+import net.sf.jsr107cache.CacheException;
+import net.sf.jsr107cache.CacheManager;
+import razorclaw.datastore.PhraseStoreHandler;
 import razorclaw.object.Dictionaries.Status;
+import razorclaw.object.Phrase;
+import razorclaw.object.Webpage;
 
 import com.google.appengine.api.labs.taskqueue.Queue;
 import com.google.appengine.api.labs.taskqueue.QueueFactory;
 import com.google.appengine.api.labs.taskqueue.TaskOptions;
 
-import net.sf.jsr107cache.Cache;
-import net.sf.jsr107cache.CacheException;
-import net.sf.jsr107cache.CacheManager;
-
+@SuppressWarnings("deprecation")
 public class ParseTaskHandler extends HttpServlet {
     /**
      * 
@@ -31,13 +33,12 @@ public class ParseTaskHandler extends HttpServlet {
 
     private Webpage _webpage; // content and metadata
 
-    private String _html;
-
-    private Cache _cache;
+    private Cache _crawlCache, _parseCache;
 
     private static final Logger LOG = Logger.getLogger(ParseTaskHandler.class
 	    .getName());
 
+    @Override
     public void doPost(HttpServletRequest req, HttpServletResponse resp)
 	    throws IOException {
 	if ((_domain = req.getParameter("domain").toLowerCase()) != null) {
@@ -46,13 +47,15 @@ public class ParseTaskHandler extends HttpServlet {
 
 		_webpage = new Webpage();
 
-		loadCache();
+		load();
 
 		parse();
 
-		saveResult();
-		
+		save();
+
 		System.out.println(_webpage.getPhrases().toString());
+
+		RankTaskHandler.createRankTask(_domain);
 	    } else {
 		LOG.severe("Wrong parameter \"forwardURL\"");
 	    }
@@ -62,18 +65,20 @@ public class ParseTaskHandler extends HttpServlet {
 
     }
 
-    private void loadCache() {
+    private void load() {
 	LOG.info("Loading webpage cache");
 
 	try {
-	    if ((_cache = CacheManager.getInstance().getCache("crawl_cache")) == null) {
-		_cache = CacheManager.getInstance().getCacheFactory()
+	    if ((_crawlCache = CacheManager.getInstance().getCache(
+		    "crawl_cache")) == null) {
+		_crawlCache = CacheManager.getInstance().getCacheFactory()
 			.createCache(Collections.emptyMap());
 		// cache.put("crawl_cache", new HashMap<String, String>());
-		CacheManager.getInstance().registerCache("crawl_cache", _cache);
+		CacheManager.getInstance().registerCache("crawl_cache",
+			_crawlCache);
 	    }
 
-	    _webpage = (Webpage) _cache.get(_forwardURL);
+	    _webpage = (Webpage) _crawlCache.get(_forwardURL);
 	} catch (CacheException e) {
 
 	}
@@ -93,36 +98,46 @@ public class ParseTaskHandler extends HttpServlet {
 	}
     }
 
-    private void saveResult() {
+    private void save() {
 	LOG.info("Saving parse result for next step");
 
 	try {
-	    if ((_cache = CacheManager.getInstance().getCache("parse_cache")) == null) {
-		_cache = CacheManager.getInstance().getCacheFactory()
+	    // save to memcache
+	    if ((_parseCache = CacheManager.getInstance().getCache(
+		    "parse_cache")) == null) {
+		_parseCache = CacheManager.getInstance().getCacheFactory()
 			.createCache(Collections.emptyMap());
 		// cache.put("crawl_cache", new HashMap<String, String>());
-		CacheManager.getInstance().registerCache("parse_cache", _cache);
+		CacheManager.getInstance().registerCache("parse_cache",
+			_parseCache);
 	    }
 
-	    _cache.put(_forwardURL, _webpage);
+	    _parseCache.put(_forwardURL, _webpage);
+
+	    // save to datastore
+	    for (Phrase p : _webpage.getPhrases()) {
+		PhraseStoreHandler.put(p.getPhrase(), p.getProperties().get(0));
+	    }
 
 	} catch (CacheException e) {
 	    LOG.severe("Saving parse result failed");
 	}
     }
 
-    @SuppressWarnings("deprecation")
-    private void createRankTask() {
-	LOG.info("Creating rank task");
+    /**
+     * create a parse task after crawling
+     */
+    public static void createParseTask(String forwardURL, String domain) {
+	LOG.info("Creating parse task");
 
 	try {
-	    Queue queue = QueueFactory.getQueue("rank-queue");
-	    queue.add(TaskOptions.Builder.url("/RankTaskHandler").param(
-		    "domain", _forwardURL));
+	    Queue queue = QueueFactory.getQueue("parse-queue");
+	    queue.add(TaskOptions.Builder.url("/ParseTaskHandler")
+		    .param("forwardURL", forwardURL).param("domain", domain));
 	} catch (Exception ex) {
 	    ex.printStackTrace();
 
-	    LOG.severe("Creating rank task failed");
+	    LOG.severe("Creating parse task failed");
 	}
     }
 }
