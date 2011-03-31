@@ -3,7 +3,7 @@ package razorclaw.filter;
 import java.util.List;
 
 import razorclaw.linguistic.pos.BrownPOSTag;
-import razorclaw.parse.OpenNLPPOSTagger;
+import razorclaw.parser.OpenNLPPOSTagger;
 
 
 

@@ -1,6 +1,6 @@
 package razorclaw.filter;
 
-import razorclaw.parse.TextUtils;
+import razorclaw.parser.TextUtils;
 
 public class AlphabeticFilter implements IFilter
 {
