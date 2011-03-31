@@ -16,13 +16,12 @@ import razorclaw.parse.PorterStemmer;
 import razorclaw.parse.StopwordsHandler;
 import razorclaw.parse.TextUtils;
 
-
 /**
- * represents a webpage crawled from a dot.tk domain
- * NOTE: there could be multiple dot.tk domains pointing to the same webpage
+ * represents a webpage crawled from a dot.tk domain NOTE: there could be
+ * multiple dot.tk domains pointing to the same webpage
  * 
  * @author Shuai YUAN
- *
+ * 
  */
 public class Webpage implements Serializable {
     /**
@@ -40,7 +39,8 @@ public class Webpage implements Serializable {
 
     private Status _status;
 
-    private String _html; // store HTML string instead of DOM to implement Serializable
+    private String _html; // store HTML string instead of DOM to implement
+			  // Serializable
 
     private int _phrases_count = 0;
 
@@ -56,6 +56,9 @@ public class Webpage implements Serializable {
 
 	// tokenize to phrases
 	ArrayList<Phrase> mid = new ArrayList<Phrase>();
+	Phrase phrase;
+	PhraseProperty property;
+
 	for (String s : _sentences) {
 	    for (String p : OpenNLPTokenizer.tokenizeToPhrases(s)) {
 		// remove punctuation & non-ASCII chars
@@ -63,8 +66,12 @@ public class Webpage implements Serializable {
 		p = TextUtils.removeNonAlphabeticChars(p);
 		p = p.toLowerCase().trim();
 
+		phrase = new Phrase(p);
+		property = new PhraseProperty();
+		phrase.getProperties().add(property);
+
 		if (p != null && !p.isEmpty() && p.length() > 0) {
-		    mid.add(new Phrase(p));
+		    mid.add(phrase);
 		}
 	    }
 	}
@@ -72,32 +79,41 @@ public class Webpage implements Serializable {
 	_webpageMeta = new WebpageMeta();
 	_webpageMeta.parseMeta(doc);
 
-	Phrase phrase;
 	for (String s : _webpageMeta.getTitle()) {
 	    int idx = _phrases.indexOf(phrase = new Phrase(s));
-	    if (idx == -1) {
-		phrase.setInTitle(true);
+	    if (idx == -1) { // no such phrase
+		phrase = new Phrase();
+		phrase.getProperties().add(new PhraseProperty());
+		phrase.getProperties().get(0).setTitle(true);
+
 		_phrases.add(phrase);
 	    } else {
-		_phrases.get(idx).setInTitle(true);
+		_phrases.get(idx).getProperties().get(0).setTitle(true);
 	    }
 	}
 	for (String s : _webpageMeta.getKeywords()) {
 	    int idx = _phrases.indexOf(phrase = new Phrase(s));
-	    if (idx == -1) {
-		phrase.setInKeywords(true);
+	    if (idx == -1) { // no such phrase
+		phrase = new Phrase();
+		phrase.getProperties().add(new PhraseProperty());
+		phrase.getProperties().get(0).setMetaKeywords(true);
+
 		_phrases.add(phrase);
 	    } else {
-		_phrases.get(idx).setInKeywords(true);
+		_phrases.get(idx).getProperties().get(0).setMetaKeywords(true);
 	    }
 	}
 	for (String s : _webpageMeta.getDescription()) {
 	    int idx = _phrases.indexOf(phrase = new Phrase(s));
-	    if (idx == -1) {
-		phrase.setInDescription(true);
+	    if (idx == -1) { // no such phrase
+		phrase = new Phrase();
+		phrase.getProperties().add(new PhraseProperty());
+		phrase.getProperties().get(0).setMetaDescription(true);
+
 		_phrases.add(phrase);
 	    } else {
-		_phrases.get(idx).setInDescription(true);
+		_phrases.get(idx).getProperties().get(0)
+			.setMetaDescription(true);
 	    }
 	}
 	// remove stopwords
@@ -109,6 +125,7 @@ public class Webpage implements Serializable {
 		PorterStemmer stemmer = new PorterStemmer();
 		p.setPhrase(stemmer.stem(p.getPhrase()));
 		_phrases.add(p);
+
 		// total count
 		_phrases_count++;
 	    }
@@ -118,7 +135,8 @@ public class Webpage implements Serializable {
 	_phrases = new ArrayList<Phrase>();
 
 	// merge
-	Collections.sort(mid);
+	Collections.sort(mid); // sort by alphabet
+
 	Phrase current = null;
 	for (Phrase p : mid) {
 	    if (current == null) {
@@ -128,7 +146,7 @@ public class Webpage implements Serializable {
 		_phrases.add(current);
 		current = p;
 	    } else if (current.equals(p)) {
-		current.increaseOccurance();
+		current.getProperties().get(0).increaseOccurance();
 	    } else {
 
 	    }
@@ -136,10 +154,18 @@ public class Webpage implements Serializable {
 
 	// tag part-of-speech, TF
 	for (Phrase p : _phrases) {
-	    p.setPOS(OpenNLPPOSTagger.getWordTag(p.getPhrase()));
+	    p.getProperties()
+		    .get(0)
+		    .setPartOfSpeech(
+			    PartOfSpeech.load(OpenNLPPOSTagger.getWordTag(p
+				    .getPhrase())));
 
-	    p.setTF((double) p.getOccurance() / _phrases_count);
-	}	
+	    p.getProperties()
+		    .get(0)
+		    .setTFScore(
+			    (double) p.getProperties().get(0).getOccurance()
+				    / _phrases_count);
+	}
     }
 
     // -----------------------getters and setters---------------------

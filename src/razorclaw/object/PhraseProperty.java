@@ -143,6 +143,10 @@ public class PhraseProperty {
 	public boolean isNew() {
 		return _isNew;
 	}
+
+	public void increaseOccurance() {
+	    _occurance ++;	    
+	}
 	
 	
 }

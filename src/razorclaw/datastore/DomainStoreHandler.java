@@ -207,7 +207,7 @@ public class DomainStoreHandler {
 	    }
 	}
 	
-	updateCounter();
+	updateAccessCounter();
 
 	return result;
     }
@@ -233,10 +233,10 @@ public class DomainStoreHandler {
 	    }
 	}
 
-	updateCounter();
+	updateAccessCounter();
     }
 
-    private static void updateCounter() {
+    private static void updateAccessCounter() {
 	_accessCounter++;
 
 	if (_accessCounter > UPDATE_THRESHOLD) {
