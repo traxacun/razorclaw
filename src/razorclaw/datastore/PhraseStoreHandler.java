@@ -1,16 +1,19 @@
 package razorclaw.datastore;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
-import com.google.appengine.api.datastore.*;
-
+import razorclaw.object.Dictionaries.PartOfSpeech;
 import razorclaw.object.Phrase;
 import razorclaw.object.PhraseProperty;
-import razorclaw.object.Dictionaries.PartOfSpeech;
+
+import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
+import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.FetchOptions;
+import com.google.appengine.api.datastore.Query;
 
 /**
  * save or load phrase entities from datastore
@@ -43,6 +46,7 @@ public class PhraseStoreHandler {
 	    properties = new ArrayList<PhraseProperty>();
 	    _cache.put(phrase, properties);
 	}
+	pp.setNew(true);
 	properties.add(pp);
 
 	updateAccessCounter();
@@ -178,5 +182,5 @@ public class PhraseStoreHandler {
 
 	    _accessCounter = 0;
 	}
-    }    
+    }
 }

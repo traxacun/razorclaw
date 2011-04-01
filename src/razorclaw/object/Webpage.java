@@ -1,15 +1,15 @@
 package razorclaw.object;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map.Entry;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import razorclaw.object.Dictionaries.*;
+import razorclaw.object.Dictionaries.PartOfSpeech;
+import razorclaw.object.Dictionaries.Status;
 import razorclaw.parser.OpenNLPPOSTagger;
 import razorclaw.parser.OpenNLPTokenizer;
 import razorclaw.parser.PorterStemmer;
@@ -33,7 +33,7 @@ public class Webpage implements Serializable {
 
     private APIMeta _apiMeta; // parsed from stats.tk API
 
-    private ArrayList<Phrase> _phrases = new ArrayList<Phrase>();
+    private final HashMap<String, PhraseProperty> _phrases;
 
     private String[] _sentences;
 
@@ -42,7 +42,9 @@ public class Webpage implements Serializable {
     private String _html; // store HTML string instead of DOM to implement
 			  // Serializable
 
-    private int _phrases_count = 0;
+    public Webpage() {
+	_phrases = new HashMap<String, PhraseProperty>();
+    }
 
     public void parseHTML() {
 	// load body
@@ -55,10 +57,8 @@ public class Webpage implements Serializable {
 	_sentences = OpenNLPTokenizer.tokenizeToSentence(body.text());
 
 	// tokenize to phrases
-	ArrayList<Phrase> mid = new ArrayList<Phrase>();
-	Phrase phrase;
 	PhraseProperty property;
-
+	PorterStemmer stemmer = new PorterStemmer();
 	for (String s : _sentences) {
 	    for (String p : OpenNLPTokenizer.tokenizeToPhrases(s)) {
 		// remove punctuation & non-ASCII chars
@@ -66,12 +66,18 @@ public class Webpage implements Serializable {
 		p = TextUtils.removeNonAlphabeticChars(p);
 		p = p.toLowerCase().trim();
 
-		phrase = new Phrase(p);
-		property = new PhraseProperty();
-		phrase.getProperties().add(property);
-
-		if (p != null && !p.isEmpty() && p.length() > 0) {
-		    mid.add(phrase);
+		// check if the phrase is valid
+		if (p != null && !p.isEmpty()
+			&& !StopwordsHandler.isStopwords(p)) {
+		    // stem
+		    p = stemmer.stem(p);
+		    if (_phrases.containsKey(p)) {
+			_phrases.get(p).increaseOccurance();
+		    } else {
+			property = new PhraseProperty();
+			property.setNew(true);
+			_phrases.put(p, property);
+		    }
 		}
 	    }
 	}
@@ -80,91 +86,42 @@ public class Webpage implements Serializable {
 	_webpageMeta.parseMeta(doc);
 
 	for (String s : _webpageMeta.getTitle()) {
-	    int idx = _phrases.indexOf(phrase = new Phrase(s));
-	    if (idx == -1) { // no such phrase
-		phrase = new Phrase();
-		phrase.getProperties().add(new PhraseProperty());
-		phrase.getProperties().get(0).setTitle(true);
+	    if (_phrases.containsKey(s)) {
+		_phrases.get(s).setTitle(true).increaseOccurance();
+	    } else { // not exists
+		property = new PhraseProperty();
+		property.setNew(true).setTitle(true);
 
-		_phrases.add(phrase);
-	    } else {
-		_phrases.get(idx).getProperties().get(0).setTitle(true);
+		_phrases.put(s, property);
 	    }
 	}
 	for (String s : _webpageMeta.getKeywords()) {
-	    int idx = _phrases.indexOf(phrase = new Phrase(s));
-	    if (idx == -1) { // no such phrase
-		phrase = new Phrase();
-		phrase.getProperties().add(new PhraseProperty());
-		phrase.getProperties().get(0).setMetaKeywords(true);
+	    if (_phrases.containsKey(s)) {
+		_phrases.get(s).setTitle(true);
+	    } else { // not exists
+		property = new PhraseProperty();
+		property.setNew(true).setMetaKeywords(true);
 
-		_phrases.add(phrase);
-	    } else {
-		_phrases.get(idx).getProperties().get(0).setMetaKeywords(true);
+		_phrases.put(s, property);
 	    }
 	}
-	for (String s : _webpageMeta.getDescription()) {
-	    int idx = _phrases.indexOf(phrase = new Phrase(s));
-	    if (idx == -1) { // no such phrase
-		phrase = new Phrase();
-		phrase.getProperties().add(new PhraseProperty());
-		phrase.getProperties().get(0).setMetaDescription(true);
+	for (String s : _webpageMeta.getKeywords()) {
+	    if (_phrases.containsKey(s)) {
+		_phrases.get(s).setTitle(true);
+	    } else { // not exists
+		property = new PhraseProperty();
+		property.setNew(true).setMetaDescription(true);
 
-		_phrases.add(phrase);
-	    } else {
-		_phrases.get(idx).getProperties().get(0)
-			.setMetaDescription(true);
-	    }
-	}
-	// remove stopwords
-	for (Phrase p : mid) {
-	    if (StopwordsHandler.isStopwords(p.getPhrase())) {
-
-	    } else {
-		// stem
-		PorterStemmer stemmer = new PorterStemmer();
-		p.setPhrase(stemmer.stem(p.getPhrase()));
-		_phrases.add(p);
-
-		// total count
-		_phrases_count++;
-	    }
-	}
-	// get new temporary list
-	mid = new ArrayList<Phrase>(_phrases);
-	_phrases = new ArrayList<Phrase>();
-
-	// merge
-	Collections.sort(mid); // sort by alphabet
-
-	Phrase current = null;
-	for (Phrase p : mid) {
-	    if (current == null) {
-		current = p;
-	    } else if (!current.equals(p)) {
-		// save to result list
-		_phrases.add(current);
-		current = p;
-	    } else if (current.equals(p)) {
-		current.getProperties().get(0).increaseOccurance();
-	    } else {
-
+		_phrases.put(s, property);
 	    }
 	}
 
 	// tag part-of-speech, TF
-	for (Phrase p : _phrases) {
-	    p.getProperties()
-		    .get(0)
-		    .setPartOfSpeech(
-			    PartOfSpeech.load(OpenNLPPOSTagger.getWordTag(p
-				    .getPhrase())));
-
-	    p.getProperties()
-		    .get(0)
-		    .setTFScore(
-			    (double) p.getProperties().get(0).getOccurance()
-				    / _phrases_count);
+	for (Entry<String, PhraseProperty> e : _phrases.entrySet()) {
+	    e.getValue().setPartOfSpeech(
+		    PartOfSpeech.load(OpenNLPPOSTagger.getWordTag(e.getKey())));
+	    e.getValue().setTFScore(
+		    (double) e.getValue().getOccurance() / _phrases.size());
 	}
     }
 
@@ -181,7 +138,7 @@ public class Webpage implements Serializable {
 	return _sentences;
     }
 
-    public ArrayList<Phrase> getPhrases() {
+    public HashMap<String, PhraseProperty> getPhrases() {
 	return _phrases;
     }
 
