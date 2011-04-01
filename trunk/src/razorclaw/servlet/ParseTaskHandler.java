@@ -2,6 +2,7 @@ package razorclaw.servlet;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServlet;
@@ -13,7 +14,7 @@ import net.sf.jsr107cache.CacheException;
 import net.sf.jsr107cache.CacheManager;
 import razorclaw.datastore.PhraseStoreHandler;
 import razorclaw.object.Dictionaries.Status;
-import razorclaw.object.Phrase;
+import razorclaw.object.PhraseProperty;
 import razorclaw.object.Webpage;
 
 import com.google.appengine.api.labs.taskqueue.Queue;
@@ -44,18 +45,16 @@ public class ParseTaskHandler extends HttpServlet {
 	if ((_domain = req.getParameter("domain").toLowerCase()) != null) {
 	    if ((_forwardURL = req.getParameter("forwardURL")) != null) {
 		LOG.info("Received parse request for URL: " + _forwardURL);
-
-		_webpage = new Webpage();
-
+		// load webpage cache
 		load();
-
+		// tokenize, remove stopwords, stem, merge and etc.
 		parse();
-
+		// save parse result
 		save();
-
+		// test the result
 		System.out.println(_webpage.getPhrases().toString());
 
-		RankTaskHandler.createRankTask(_domain);
+		// RankTaskHandler.createRankTask(_domain);
 	    } else {
 		LOG.severe("Wrong parameter \"forwardURL\"");
 	    }
@@ -68,6 +67,7 @@ public class ParseTaskHandler extends HttpServlet {
     private void load() {
 	LOG.info("Loading webpage cache");
 
+	// _webpage = new Webpage();
 	try {
 	    if ((_crawlCache = CacheManager.getInstance().getCache(
 		    "crawl_cache")) == null) {
@@ -80,7 +80,7 @@ public class ParseTaskHandler extends HttpServlet {
 
 	    _webpage = (Webpage) _crawlCache.get(_forwardURL);
 	} catch (CacheException e) {
-
+	    LOG.severe("Loading webpage cache failed");
 	}
     }
 
@@ -111,14 +111,13 @@ public class ParseTaskHandler extends HttpServlet {
 		CacheManager.getInstance().registerCache("parse_cache",
 			_parseCache);
 	    }
-
 	    _parseCache.put(_forwardURL, _webpage);
 
 	    // save to datastore
-	    for (Phrase p : _webpage.getPhrases()) {
-		PhraseStoreHandler.put(p.getPhrase(), p.getProperties().get(0));
+	    for (Entry<String, PhraseProperty> e : _webpage.getPhrases()
+		    .entrySet()) {
+		PhraseStoreHandler.put(e.getKey(), e.getValue());
 	    }
-
 	} catch (CacheException e) {
 	    LOG.severe("Saving parse result failed");
 	}

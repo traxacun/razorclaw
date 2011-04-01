@@ -1,152 +1,195 @@
 package razorclaw.object;
 
+import java.io.Serializable;
+
 import razorclaw.object.Dictionaries.PartOfSpeech;
 
 /**
  * holds properties for a phrases in a given document(forwardURL)
  * 
  * @author Shuai Yuan
- *
+ * 
  */
-public class PhraseProperty {
-	private String _forwardURL;
-	
-	private int _occurance;
-	
-	private double _tfScore, _idfScore, _tfidfScore, _bm25fScore, _languageModelScore;
-	
-	private boolean _isTitle, _isH1, _isH2, _isMetaKeywords, _isMetaDescription, _isCapital;
-	
-	private PartOfSpeech _partOfSpeech;
-	
-	/**
-	 * flag for sync
-	 */
-	private boolean _isNew;
+public class PhraseProperty implements Serializable {
+    /**
+     * serialVersionUID
+     */
+    private static final long serialVersionUID = -7543270972725805035L;
 
-	public void setForwardURL(String _forwardURL) {
-		this._forwardURL = _forwardURL;
-	}
+    private String _forwardURL;
 
-	public String getForwardURL() {
-		return _forwardURL;
-	}
+    private int _occurance;
 
-	public void setOccurance(int _occurance) {
-		this._occurance = _occurance;
-	}
+    private double _tfScore, _idfScore, _tfidfScore, _bm25fScore,
+	    _languageModelScore;
 
-	public int getOccurance() {
-		return _occurance;
-	}
+    private boolean _isTitle, _isH1, _isH2, _isMetaKeywords,
+	    _isMetaDescription, _isCapital;
 
-	public void setTFScore(double _tfScore) {
-		this._tfScore = _tfScore;
-	}
+    private PartOfSpeech _partOfSpeech;
+    /**
+     * flag for sync
+     */
+    private boolean _isNew;
 
-	public double getTFScore() {
-		return _tfScore;
-	}
+    public PhraseProperty() {
+	_forwardURL = "";
 
-	public void setIDFScore(double _idfScore) {
-		this._idfScore = _idfScore;
-	}
+	_occurance = 1;
 
-	public double getIDFScore() {
-		return _idfScore;
-	}
+	_tfScore = _idfScore = _tfidfScore = _bm25fScore = _languageModelScore = 0.0;
 
-	public void setTFIDFScore(double _tfidfScore) {
-		this._tfidfScore = _tfidfScore;
-	}
+	_isTitle = _isH1 = _isH2 = _isMetaKeywords = _isMetaDescription = _isCapital = false;
 
-	public double getTFIDFScore() {
-		return _tfidfScore;
-	}
+	_isNew = false;
 
-	public void setBM25FScore(double _bm25fScore) {
-		this._bm25fScore = _bm25fScore;
-	}
+	_partOfSpeech = PartOfSpeech.UNSPECIFIED;
+    }
 
-	public double getBM25FScore() {
-		return _bm25fScore;
-	}
+    @Override
+    public String toString() {
+	return "Occurance: " + _occurance + " TFScore: " + _tfScore;
+    }
 
-	public void setLanguageModelScore(double _languageModelScore) {
-		this._languageModelScore = _languageModelScore;
-	}
+    // ------------------getter and setter-----------------------
+    public PhraseProperty setForwardURL(String _forwardURL) {
+	this._forwardURL = _forwardURL;
+	return this;
+    }
 
-	public double getLanguageModelScore() {
-		return _languageModelScore;
-	}
+    public String getForwardURL() {
+	return _forwardURL;
+    }
 
-	public void setMetaDescription(boolean _isMetaDescription) {
-		this._isMetaDescription = _isMetaDescription;
-	}
+    public PhraseProperty setOccurance(int _occurance) {
+	this._occurance = _occurance;
+	return this;
+    }
 
-	public boolean isMetaDescription() {
-		return _isMetaDescription;
-	}
+    public int getOccurance() {
+	return _occurance;
+    }
 
-	public void setMetaKeywords(boolean _isMetaKeywords) {
-		this._isMetaKeywords = _isMetaKeywords;
-	}
+    public PhraseProperty setTFScore(double _tfScore) {
+	this._tfScore = _tfScore;
+	return this;
+    }
 
-	public boolean isMetaKeywords() {
-		return _isMetaKeywords;
-	}
+    public double getTFScore() {
+	return _tfScore;
+    }
 
-	public void setH2(boolean _isH2) {
-		this._isH2 = _isH2;
-	}
+    public PhraseProperty setIDFScore(double _idfScore) {
+	this._idfScore = _idfScore;
+	return this;
+    }
 
-	public boolean isH2() {
-		return _isH2;
-	}
+    public double getIDFScore() {
+	return _idfScore;
+    }
 
-	public void setH1(boolean _isH1) {
-		this._isH1 = _isH1;
-	}
+    public PhraseProperty setTFIDFScore(double _tfidfScore) {
+	this._tfidfScore = _tfidfScore;
+	return this;
+    }
 
-	public boolean isH1() {
-		return _isH1;
-	}
+    public double getTFIDFScore() {
+	return _tfidfScore;
+    }
 
-	public void setTitle(boolean _isTitle) {
-		this._isTitle = _isTitle;
-	}
+    public PhraseProperty setBM25FScore(double _bm25fScore) {
+	this._bm25fScore = _bm25fScore;
+	return this;
+    }
 
-	public boolean isTitle() {
-		return _isTitle;
-	}
+    public double getBM25FScore() {
+	return _bm25fScore;
+    }
 
-	public void setCapital(boolean _isCapital) {
-		this._isCapital = _isCapital;
-	}
+    public PhraseProperty setLanguageModelScore(double _languageModelScore) {
+	this._languageModelScore = _languageModelScore;
+	return this;
+    }
 
-	public boolean isCapital() {
-		return _isCapital;
-	}
+    public double getLanguageModelScore() {
+	return _languageModelScore;
+    }
 
-	public void setPartOfSpeech(PartOfSpeech _partOfSpeech) {
-		this._partOfSpeech = _partOfSpeech;
-	}
+    public PhraseProperty setMetaDescription(boolean _isMetaDescription) {
+	this._isMetaDescription = _isMetaDescription;
+	return this;
+    }
 
-	public PartOfSpeech getPartOfSpeech() {
-		return _partOfSpeech;
-	}
+    public boolean isMetaDescription() {
+	return _isMetaDescription;
+    }
 
-	public void setNew(boolean _isNew) {
-		this._isNew = _isNew;
-	}
+    public PhraseProperty setMetaKeywords(boolean _isMetaKeywords) {
+	this._isMetaKeywords = _isMetaKeywords;
+	return this;
+    }
 
-	public boolean isNew() {
-		return _isNew;
-	}
+    public boolean isMetaKeywords() {
+	return _isMetaKeywords;
+    }
 
-	public void increaseOccurance() {
-	    _occurance ++;	    
-	}
-	
-	
+    public PhraseProperty setH2(boolean _isH2) {
+	this._isH2 = _isH2;
+	return this;
+    }
+
+    public boolean isH2() {
+	return _isH2;
+    }
+
+    public PhraseProperty setH1(boolean _isH1) {
+	this._isH1 = _isH1;
+	return this;
+    }
+
+    public boolean isH1() {
+	return _isH1;
+    }
+
+    public PhraseProperty setTitle(boolean _isTitle) {
+	this._isTitle = _isTitle;
+	return this;
+    }
+
+    public boolean isTitle() {
+	return _isTitle;
+    }
+
+    public PhraseProperty setCapital(boolean _isCapital) {
+	this._isCapital = _isCapital;
+	return this;
+    }
+
+    public boolean isCapital() {
+	return _isCapital;
+    }
+
+    public PhraseProperty setPartOfSpeech(PartOfSpeech _partOfSpeech) {
+	this._partOfSpeech = _partOfSpeech;
+	return this;
+    }
+
+    public PartOfSpeech getPartOfSpeech() {
+	return _partOfSpeech;
+    }
+
+    public PhraseProperty setNew(boolean _isNew) {
+	this._isNew = _isNew;
+	return this;
+    }
+
+    public boolean isNew() {
+	return _isNew;
+    }
+
+    public PhraseProperty increaseOccurance() {
+	_occurance++;
+	return this;
+    }
+
 }

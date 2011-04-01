@@ -20,9 +20,12 @@ import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-import razorclaw.datastore.DomainStoreHandler;
 import razorclaw.object.APIMeta;
 import razorclaw.object.Webpage;
+
+import com.google.appengine.api.labs.taskqueue.Queue;
+import com.google.appengine.api.labs.taskqueue.QueueFactory;
+import com.google.appengine.api.labs.taskqueue.TaskOptions;
 
 /**
  * invoke this handler to create a crawl task, which will download the webpage
@@ -35,13 +38,13 @@ import razorclaw.object.Webpage;
 public class CrawlTaskHandler extends HttpServlet {
 
     /**
-     * 
+     * serialVersionUID
      */
     private static final long serialVersionUID = -1200053906967311297L;
 
     private final String API_BASE = "http://www.stats.tk/ucl/domain?domain=";
 
-    private final String HTTP_BASE = "http://";
+    // private final String HTTP_BASE = "http://";
 
     private String _domain; // dot.tk domain
 
@@ -64,37 +67,30 @@ public class CrawlTaskHandler extends HttpServlet {
 	if ((_domain = req.getParameter("domain").toLowerCase()) != null) {
 	    LOG.info("Received crawl request for domain: " + _domain);
 
-	    // check if we already have the KeyPhrase for the given domain
-	    String keyPhrase;
-	    if ((keyPhrase = DomainStoreHandler.getKeyPhrase(_domain)) != null) {
-		// KeyPhrase exists
-		ReportTaskHandler.createReportTask(_domain, keyPhrase);
+	    _webpage = new Webpage();
+	    // get API metadata from stats.tk
+	    crawlAPIMeta();
+	    // if already holding the content of the webpage
+	    if (checkCache()) {
+		load();
 	    } else {
-		_webpage = new Webpage();
-		// get API metadata from stats.tk
-		crawlAPIMeta();
-		// if already holding the content of the webpage
-		if (checkCache()) {
-		    load();
-		} else {
-		    crawlWebpage();
+		crawlWebpage();
 
-		    // save the result to cache
-		    save();
-		}
-		// we always create a parse task for the forwardURL. although
-		// the webpage may be already parsed, there would be different
-		// API metadata associated with the dot.tk domain
-		ParseTaskHandler.createParseTask(_forwardURL, _domain);
+		// save the HTML to cache
+		save();
 	    }
+	    // we always create a parse task for the forwardURL. although
+	    // the webpage may be already parsed, there would be different
+	    // API metadata associated with the dot.tk domain
+	    ParseTaskHandler.createParseTask(_forwardURL, _domain);
 	} else {
 	    LOG.severe("Wrong parameter \"domain\"");
 	}
-
     }
 
     /**
-     * save the crawl result to memcache for parse, key=_domain, value=_webpage
+     * save the crawl result to memcache for parse, key=_forwardURL,
+     * value=_webpage
      */
     private void save() {
 	LOG.info("Saving crawl result for next step");
@@ -120,6 +116,7 @@ public class CrawlTaskHandler extends HttpServlet {
     private void crawlAPIMeta() {
 	LOG.info("Crawling metadata from stats.tk API");
 
+	// use while loop to survive the timeout exception
 	while (_forwardURL == null) {
 	    try {
 		// get all meta data from dot.tk API
@@ -140,25 +137,28 @@ public class CrawlTaskHandler extends HttpServlet {
 
 		_forwardURL = apiMeta.getForwardURL();
 	    } catch (IOException e) {
-
+		LOG.warning("Crawling metadata from stats.tk API failed");
 	    } catch (JSONException e) {
-
+		LOG.warning("Crawling metadata from stats.tk API failed");
 	    }
 	}
     }
 
+    /**
+     * crawl HTML using _forwardURL instead of _domain
+     */
     private void crawlWebpage() {
 	LOG.info("Crawling webpage");
 	try {
 	    // get webpage
-	    Document doc = Jsoup.connect(HTTP_BASE + _domain).get();
+	    Document doc = Jsoup.connect(_forwardURL).get();
 
 	    // save HTML text instead of DOM
 	    // Document is not Serializable therefore couldn't be saved to cache
 	    _webpage.setHtml(doc.html());
 
 	} catch (IOException e) {
-
+	    LOG.severe("Crawling webpage failed");
 	}
     }
 
@@ -180,11 +180,14 @@ public class CrawlTaskHandler extends HttpServlet {
 	    return _cache.containsKey(_forwardURL);
 
 	} catch (CacheException e) {
-
+	    LOG.warning("Check crawling cache failed");
 	    return false;
 	}
     }
 
+    /**
+     * load a webpage from memcache if it's already crawled
+     */
     private void load() {
 	LOG.info("Loading webpage cache");
 
@@ -199,7 +202,27 @@ public class CrawlTaskHandler extends HttpServlet {
 	    _webpage = (Webpage) _cache.get(_forwardURL);
 
 	} catch (CacheException e) {
+	    LOG.severe("Loading webpage cache failed");
+	}
+    }
 
+    /**
+     * create a crawl task for the given domain
+     * 
+     * @param domain
+     *            dot.tk domain
+     */
+    public static void createCrawlTask(String domain) {
+	LOG.info("Creating crawl task");
+
+	try {
+	    Queue queue = QueueFactory.getQueue("crawl-queue");
+	    queue.add(TaskOptions.Builder.url("/CrawlTaskHandler").param(
+		    "domain", domain));
+	} catch (Exception ex) {
+	    ex.printStackTrace();
+
+	    LOG.severe("Creating crawl task failed");
 	}
     }
 }

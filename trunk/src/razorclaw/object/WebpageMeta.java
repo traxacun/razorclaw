@@ -1,14 +1,15 @@
 package razorclaw.object;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import razorclaw.object.Dictionaries.*;
-
+import razorclaw.object.Dictionaries.HtmlVersion;
+import razorclaw.parser.TextUtils;
 
 /**
  * Stores metadata tags extracted from <head> for a webpage, including title and
@@ -27,26 +28,28 @@ public class WebpageMeta implements Serializable {
      */
     private static final long serialVersionUID = -7118304523690937732L;
 
-    private HtmlVersion _htmlVersion = HtmlVersion.UNKNOWN;
+    private final HtmlVersion _htmlVersion = HtmlVersion.UNKNOWN;
 
     /**
      * These are non-formal metadata and may not exist in all webpages.
      */
-    private String _language = "", _contentType = "", _charset = "",
+    private final String _language = "", _contentType = "", _charset = "",
 	    _date = "";
 
-    /* breaking into words would be faster than search in a long string */
-    private String[] _keywords = {};
-    private String[] _description = {};
-    private String[] _title = {};
+    // breaking into words would be faster than search in a long string
+    private final ArrayList<String> _keywords, _description, _title;
+
+    public WebpageMeta() {
+	_keywords = new ArrayList<String>();
+	_description = new ArrayList<String>();
+	_title = new ArrayList<String>();
+    }
 
     /**
      * fill attributes from input html node.
      * 
      * @param doc
      *            the input html DOM node
-     * 
-     * 
      */
     public void parseMeta(Document doc) {
 	// html version
@@ -57,29 +60,45 @@ public class WebpageMeta implements Serializable {
 	// this.setHtmlVersion(checkHtmlVersion(s));
 
 	// keywords and description from <meta>
-
 	Elements elements = doc.getElementsByTag("meta");
 	Iterator<Element> it = elements.iterator();
 	while (it.hasNext()) {
 	    Element e = it.next();
 	    if (e.attr("name").equals("keywords")) {
-		_keywords = e.attr("content").split(" ");
+		String[] arr = e.attr("content")
+			.split(TextUtils.replacePattern);
+		for (String s : arr) {
+		    if (!s.isEmpty()) {
+			_keywords.add(s);
+		    }
+		}
 	    } else if (e.attr("name").equals("description")) {
-		_description = e.attr("content").split(" ");
+		String[] arr = e.attr("content")
+			.split(TextUtils.replacePattern);
+		for (String s : arr) {
+		    if (!s.isEmpty()) {
+			_description.add(s);
+		    }
+		}
 	    } else {
 		continue;
 	    }
 	}
 
 	// title
-	_title = doc.title().split(" ");
+	String[] arr = doc.title().split(TextUtils.replacePattern);
+	for (String s : arr) {
+	    if (!s.isEmpty()) {
+		_title.add(s);
+	    }
+	}
 
 	// language
 
     }
 
     // -----------------------getters and setters---------------------
-    public String[] getTitle() {
+    public ArrayList<String> getTitle() {
 	return _title;
     }
 
@@ -103,11 +122,11 @@ public class WebpageMeta implements Serializable {
 	return _date;
     }
 
-    public String[] getKeywords() {
+    public ArrayList<String> getKeywords() {
 	return _keywords;
     }
 
-    public String[] getDescription() {
+    public ArrayList<String> getDescription() {
 	return _description;
     }
 

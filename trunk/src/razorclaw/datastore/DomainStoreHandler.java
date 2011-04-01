@@ -80,7 +80,7 @@ public class DomainStoreHandler {
 
     private static int _accessCounter = 0;
 
-    private static final int UPDATE_THRESHOLD = 100;
+    private static final int UPDATE_THRESHOLD = 10;
 
     /**
      * check if a webpage(forwardURL) exists in the statistic datastore
