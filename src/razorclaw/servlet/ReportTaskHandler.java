@@ -24,7 +24,7 @@ public class ReportTaskHandler extends HttpServlet {
      */
     private static final long serialVersionUID = 312162986545077269L;
 
-    private static final Logger LOG = Logger.getLogger(CrawlTaskHandler.class
+    private static final Logger LOG = Logger.getLogger(ReportTaskHandler.class
 	    .getName());
 
     @Override

@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import net.sf.jsr107cache.Cache;
 import net.sf.jsr107cache.CacheException;
 import net.sf.jsr107cache.CacheManager;
+import razorclaw.datastore.DomainStoreHandler;
 import razorclaw.datastore.PhraseStoreHandler;
 import razorclaw.object.Dictionaries.Status;
 import razorclaw.object.PhraseProperty;
@@ -49,12 +50,14 @@ public class ParseTaskHandler extends HttpServlet {
 		load();
 		// tokenize, remove stopwords, stem, merge and etc.
 		parse();
-		// save parse result
-		save();
-		// test the result
-		System.out.println(_webpage.getPhrases().toString());
+		if (_webpage.getStatus() != Status.FAILED) {
+		    // save parse result
+		    save();
 
-		// RankTaskHandler.createRankTask(_domain);
+		    RankTaskHandler.createRankTask(_domain);
+		} else {
+		    LOG.severe("Parse failed for URL: " + _forwardURL);
+		}
 	    } else {
 		LOG.severe("Wrong parameter \"forwardURL\"");
 	    }
@@ -91,8 +94,11 @@ public class ParseTaskHandler extends HttpServlet {
 	    _webpage.setStatus(Status.PARSING);
 
 	    _webpage.parseHTML();
+	    if (_webpage.getStatus() != Status.FAILED) {
+		_webpage.setStatus(Status.PARSED);
+	    } else {
 
-	    _webpage.setStatus(Status.PARSED);
+	    }
 	} else {
 	    LOG.severe("Parsing the webpage failed");
 	}
@@ -111,13 +117,17 @@ public class ParseTaskHandler extends HttpServlet {
 		CacheManager.getInstance().registerCache("parse_cache",
 			_parseCache);
 	    }
-	    _parseCache.put(_forwardURL, _webpage);
+	    _parseCache.put(_domain, _webpage);
 
-	    // save to datastore
+	    // save the phrases to datastore
 	    for (Entry<String, PhraseProperty> e : _webpage.getPhrases()
 		    .entrySet()) {
 		PhraseStoreHandler.put(e.getKey(), e.getValue());
 	    }
+
+	    // save the webpage to datastore
+	    // TODO: move this to ranker after getting the keyphrases
+	    DomainStoreHandler.put(_forwardURL, _domain, null);
 	} catch (CacheException e) {
 	    LOG.severe("Saving parse result failed");
 	}

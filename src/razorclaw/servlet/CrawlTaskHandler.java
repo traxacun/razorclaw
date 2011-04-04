@@ -117,7 +117,8 @@ public class CrawlTaskHandler extends HttpServlet {
 	LOG.info("Crawling metadata from stats.tk API");
 
 	// use while loop to survive the timeout exception
-	while (_forwardURL == null) {
+	_forwardURL = null;
+	while (_forwardURL == null || _forwardURL.isEmpty()) {
 	    try {
 		// get all meta data from dot.tk API
 		URL fullURL = new URL(API_BASE + _domain);
@@ -142,6 +143,7 @@ public class CrawlTaskHandler extends HttpServlet {
 		LOG.warning("Crawling metadata from stats.tk API failed");
 	    }
 	}
+	LOG.info("ForwardURL parsed: " + _domain + ", " + _forwardURL);
     }
 
     /**

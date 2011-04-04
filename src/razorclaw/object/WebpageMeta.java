@@ -65,16 +65,16 @@ public class WebpageMeta implements Serializable {
 	while (it.hasNext()) {
 	    Element e = it.next();
 	    if (e.attr("name").equals("keywords")) {
-		String[] arr = e.attr("content")
-			.split(TextUtils.replacePattern);
+		String[] arr = TextUtils.removePunctuation(e.attr("content"))
+			.split(" ");
 		for (String s : arr) {
 		    if (!s.isEmpty()) {
 			_keywords.add(s);
 		    }
 		}
 	    } else if (e.attr("name").equals("description")) {
-		String[] arr = e.attr("content")
-			.split(TextUtils.replacePattern);
+		String[] arr = TextUtils.removePunctuation(e.attr("content"))
+			.split(" ");
 		for (String s : arr) {
 		    if (!s.isEmpty()) {
 			_description.add(s);
@@ -86,7 +86,8 @@ public class WebpageMeta implements Serializable {
 	}
 
 	// title
-	String[] arr = doc.title().split(TextUtils.replacePattern);
+	String[] arr = TextUtils.removePunctuation(doc.title()).split(
+		TextUtils.replacePattern);
 	for (String s : arr) {
 	    if (!s.isEmpty()) {
 		_title.add(s);

@@ -26,8 +26,7 @@ public class Dictionaries implements Serializable {
 
 	public static PartOfSpeech load(String tag) {
 	    try {
-		return (PartOfSpeech) Enum.valueOf(PartOfSpeech.class,
-			tag.toUpperCase());
+		return Enum.valueOf(PartOfSpeech.class, tag.toUpperCase());
 	    } catch (IllegalArgumentException iae) {
 		return PartOfSpeech.UNSPECIFIED;
 	    }
@@ -120,7 +119,9 @@ public class Dictionaries implements Serializable {
 	PARSED,
 	RANKING,
 	RANKED,
-	FINISHED // keyword updated
+	FAILED,
+	FINISHED
+	// keyword updated
     }
 
     public static enum CountryCode {
@@ -128,8 +129,7 @@ public class Dictionaries implements Serializable {
 
 	public static CountryCode load(String tag) {
 	    try {
-		return (CountryCode) Enum.valueOf(CountryCode.class,
-			tag.toUpperCase());
+		return Enum.valueOf(CountryCode.class, tag.toUpperCase());
 	    } catch (IllegalArgumentException iae) {
 		return CountryCode.UNSPECIFIED;
 	    }
