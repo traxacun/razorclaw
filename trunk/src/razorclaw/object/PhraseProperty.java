@@ -48,7 +48,13 @@ public class PhraseProperty implements Serializable {
 
     @Override
     public String toString() {
-	return "Occurance: " + _occurance + " TFScore: " + _tfScore;
+	return "Occurance: " + _occurance + " TFScore: " + _tfScore
+		+ " TFIDFScore: " + _tfidfScore + "\n";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+	return _forwardURL.equals(((PhraseProperty) obj).getForwardURL());
     }
 
     // ------------------getter and setter-----------------------

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -68,6 +69,11 @@ public class DomainStoreHandler {
 	public String getKeyPhrase() {
 	    return _keyPhrase;
 	}
+
+	@Override
+	public boolean equals(Object domain) {
+	    return _domain.equals(domain);
+	}
     }
 
     private static DatastoreService _datastore = DatastoreServiceFactory
@@ -76,11 +82,12 @@ public class DomainStoreHandler {
     /**
      * local cache as <forwardURL, <domain, ...>>
      */
-    private static HashMap<String, ArrayList<SimpleDomainEntity>> _cache;
+    private static ConcurrentHashMap<String, ArrayList<SimpleDomainEntity>> _cache;
 
     private static int _accessCounter = 0;
 
-    private static final int UPDATE_THRESHOLD = 10;
+    // TODO: change to a appropriate value
+    private static final int UPDATE_THRESHOLD = 1;
 
     /**
      * check if a webpage(forwardURL) exists in the statistic datastore
@@ -113,8 +120,9 @@ public class DomainStoreHandler {
 
 	Entity domainEntity = new Entity("Domain", pageEntity.getKey());
 	domainEntity.setProperty("Name", domain);
-	domainEntity.setProperty("KeyPhrase", keyPhrase);
-
+	if (keyPhrase != null) {
+	    domainEntity.setProperty("KeyPhrase", keyPhrase);
+	}
 	_datastore.put(pageEntity);
 	_datastore.put(domainEntity);
     }
@@ -150,7 +158,7 @@ public class DomainStoreHandler {
      * load cache from datastore
      */
     private static void load() {
-	_cache = new HashMap<String, ArrayList<SimpleDomainEntity>>();
+	_cache = new ConcurrentHashMap<String, ArrayList<SimpleDomainEntity>>();
 
 	Query query = new Query("Domain");
 	List<Entity> result = _datastore.prepare(query).asList(
@@ -181,13 +189,12 @@ public class DomainStoreHandler {
 		    domains.add(new SimpleDomainEntity((String) e
 			    .getProperty("Name"), (String) e
 			    .getProperty("KeyPhrase"), false));
-
 		}
 	    }
-
-	    _cache.put(forwardURL, domains);
+	    if (!domains.isEmpty()) { // leftover
+		_cache.put(forwardURL, domains);
+	    }
 	}
-
     }
 
     /**
@@ -196,9 +203,11 @@ public class DomainStoreHandler {
     private static void save() {
 	// iterate to find new entries
 	for (Entry<String, ArrayList<SimpleDomainEntity>> e : _cache.entrySet()) {
-	    for (SimpleDomainEntity dp : e.getValue()) {
-		if (dp.isNew()) {
-		    putToDS(e.getKey(), dp.getDomain(), dp.getKeyPhrase());
+	    if (e.getValue() != null) {
+		for (SimpleDomainEntity dp : e.getValue()) {
+		    if (dp.isNew()) {
+			putToDS(e.getKey(), dp.getDomain(), dp.getKeyPhrase());
+		    }
 		}
 	    }
 	}
@@ -251,14 +260,19 @@ public class DomainStoreHandler {
      * @param domain
      */
     public static void put(String forwardURL, String domain, String keyPhrase) {
+	if (_cache == null) {
+	    load();
+	}
+
 	ArrayList<SimpleDomainEntity> domains = _cache.get(forwardURL);
 
-	if (domains == null) {
+	if (domains == null) { // no dot.tk domain registered for the forwardURL
 	    domains = new ArrayList<SimpleDomainEntity>();
 	    domains.add(new SimpleDomainEntity(domain, keyPhrase, true));
 	    _cache.put(forwardURL, domains);
 	} else {
-	    if (domains.contains(domain)) {
+	    if (domains.contains(domain)) { // the dot.tk domain existing for
+					    // the forwardURL
 
 	    } else {
 		domains.add(new SimpleDomainEntity(domain, keyPhrase, true));
@@ -271,7 +285,7 @@ public class DomainStoreHandler {
     private static void updateAccessCounter() {
 	_accessCounter++;
 
-	if (_accessCounter > UPDATE_THRESHOLD) {
+	if (_accessCounter >= UPDATE_THRESHOLD) {
 	    save(); // sync to datastore
 
 	    _accessCounter = 0;

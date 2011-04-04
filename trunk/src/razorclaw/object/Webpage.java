@@ -47,81 +47,87 @@ public class Webpage implements Serializable {
     }
 
     public void parseHTML() {
-	// load body
-	Document doc = Jsoup.parse(_html);
+	try {
+	    // load body
+	    Document doc = Jsoup.parse(_html);
 
-	Element body = doc.body();
+	    Element body = doc.body();
 
-	// tokenize to sentences
-	OpenNLPTokenizer.init();
-	_sentences = OpenNLPTokenizer.tokenizeToSentence(body.text());
+	    // tokenize to sentences
+	    OpenNLPTokenizer.init();
+	    _sentences = OpenNLPTokenizer.tokenizeToSentence(body.text());
 
-	// tokenize to phrases
-	PhraseProperty property;
-	PorterStemmer stemmer = new PorterStemmer();
-	for (String s : _sentences) {
-	    for (String p : OpenNLPTokenizer.tokenizeToPhrases(s)) {
-		// remove punctuation & non-ASCII chars
-		p = TextUtils.removePunctuation(p);
-		p = TextUtils.removeNonAlphabeticChars(p);
-		p = p.toLowerCase().trim();
+	    // tokenize to phrases
+	    PhraseProperty property;
+	    PorterStemmer stemmer = new PorterStemmer();
+	    for (String s : _sentences) {
+		for (String p : OpenNLPTokenizer.tokenizeToPhrases(s)) {
+		    // remove punctuation & non-ASCII chars
+		    p = TextUtils.removePunctuation(p);
+		    p = TextUtils.removeNonAlphabeticChars(p);
+		    p = p.toLowerCase().trim();
 
-		// check if the phrase is valid
-		if (p != null && !p.isEmpty()
-			&& !StopwordsHandler.isStopwords(p)) {
-		    // stem
-		    p = stemmer.stem(p);
-		    if (_phrases.containsKey(p)) {
-			_phrases.get(p).increaseOccurance();
-		    } else {
-			property = new PhraseProperty();
-			property.setNew(true);
-			_phrases.put(p, property);
+		    // check if the phrase is valid
+		    if (p != null && !p.isEmpty()
+			    && !StopwordsHandler.isStopwords(p)) {
+			// stem
+			p = stemmer.stem(p);
+			if (_phrases.containsKey(p)) {
+			    _phrases.get(p).increaseOccurance();
+			} else {
+			    property = new PhraseProperty();
+			    property.setNew(true);
+			    _phrases.put(p, property);
+			}
 		    }
 		}
 	    }
-	}
-	// load metadata
-	_webpageMeta = new WebpageMeta();
-	_webpageMeta.parseMeta(doc);
+	    // load metadata
+	    _webpageMeta = new WebpageMeta();
+	    _webpageMeta.parseMeta(doc);
 
-	for (String s : _webpageMeta.getTitle()) {
-	    if (_phrases.containsKey(s)) {
-		_phrases.get(s).setTitle(true).increaseOccurance();
-	    } else { // not exists
-		property = new PhraseProperty();
-		property.setNew(true).setTitle(true);
+	    for (String s : _webpageMeta.getTitle()) {
+		if (_phrases.containsKey(s)) {
+		    _phrases.get(s).setTitle(true).increaseOccurance();
+		} else { // not exists
+		    property = new PhraseProperty();
+		    property.setNew(true).setTitle(true);
 
-		_phrases.put(s, property);
+		    _phrases.put(s, property);
+		}
 	    }
-	}
-	for (String s : _webpageMeta.getKeywords()) {
-	    if (_phrases.containsKey(s)) {
-		_phrases.get(s).setTitle(true);
-	    } else { // not exists
-		property = new PhraseProperty();
-		property.setNew(true).setMetaKeywords(true);
+	    for (String s : _webpageMeta.getKeywords()) {
+		if (_phrases.containsKey(s)) {
+		    _phrases.get(s).setMetaKeywords(true);
+		} else { // not exists
+		    property = new PhraseProperty();
+		    property.setNew(true).setMetaKeywords(true);
 
-		_phrases.put(s, property);
+		    _phrases.put(s, property);
+		}
 	    }
-	}
-	for (String s : _webpageMeta.getKeywords()) {
-	    if (_phrases.containsKey(s)) {
-		_phrases.get(s).setTitle(true);
-	    } else { // not exists
-		property = new PhraseProperty();
-		property.setNew(true).setMetaDescription(true);
+	    for (String s : _webpageMeta.getDescription()) {
+		if (_phrases.containsKey(s)) {
+		    _phrases.get(s).setMetaDescription(true);
+		} else { // not exists
+		    property = new PhraseProperty();
+		    property.setNew(true).setMetaDescription(true);
 
-		_phrases.put(s, property);
+		    _phrases.put(s, property);
+		}
 	    }
-	}
 
-	// tag part-of-speech, TF
-	for (Entry<String, PhraseProperty> e : _phrases.entrySet()) {
-	    e.getValue().setPartOfSpeech(
-		    PartOfSpeech.load(OpenNLPPOSTagger.getWordTag(e.getKey())));
-	    e.getValue().setTFScore(
-		    (double) e.getValue().getOccurance() / _phrases.size());
+	    // tag part-of-speech, TF, ForwardURL
+	    for (Entry<String, PhraseProperty> e : _phrases.entrySet()) {
+		e.getValue().setPartOfSpeech(
+			PartOfSpeech.load(OpenNLPPOSTagger.getWordTag(e
+				.getKey())));
+		e.getValue().setTFScore(
+			(double) e.getValue().getOccurance() / _phrases.size());
+		e.getValue().setForwardURL(_apiMeta.getForwardURL());
+	    }
+	} catch (Exception e) {
+	    _status = Status.FAILED;
 	}
     }
 
