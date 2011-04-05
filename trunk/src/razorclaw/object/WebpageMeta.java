@@ -12,7 +12,7 @@ import razorclaw.object.Dictionaries.HtmlVersion;
 import razorclaw.parser.TextUtils;
 
 /**
- * Stores metadata tags extracted from <head> for a webpage, including title and
+ * Stores metadata extracted from a webpage, including title, h1, h2, and
  * meta(keywords & description).
  * 
  * A lot of webmasters have used <meta> tags for spamming, like repeating
@@ -37,12 +37,14 @@ public class WebpageMeta implements Serializable {
 	    _date = "";
 
     // breaking into words would be faster than search in a long string
-    private final ArrayList<String> _keywords, _description, _title;
+    private final ArrayList<String> _keywords, _description, _title, _h1, _h2;
 
     public WebpageMeta() {
 	_keywords = new ArrayList<String>();
 	_description = new ArrayList<String>();
 	_title = new ArrayList<String>();
+	_h1 = new ArrayList<String>();
+	_h2 = new ArrayList<String>();
     }
 
     /**
@@ -94,6 +96,30 @@ public class WebpageMeta implements Serializable {
 	    }
 	}
 
+	// h1
+	elements = doc.getElementsByTag("h1");
+	for (it = elements.iterator(); it.hasNext();) {
+	    arr = TextUtils.removePunctuation(it.next().text()).split(
+		    TextUtils.replacePattern);
+	    for (String s : arr) {
+		if (!s.isEmpty()) {
+		    _h1.add(s);
+		}
+	    }
+	}
+
+	// h2
+	elements = doc.getElementsByTag("h2");
+	for (it = elements.iterator(); it.hasNext();) {
+	    arr = TextUtils.removePunctuation(it.next().text()).split(
+		    TextUtils.replacePattern);
+	    for (String s : arr) {
+		if (!s.isEmpty()) {
+		    _h2.add(s);
+		}
+	    }
+	}
+
 	// language
 
     }
@@ -129,6 +155,14 @@ public class WebpageMeta implements Serializable {
 
     public ArrayList<String> getDescription() {
 	return _description;
+    }
+
+    public ArrayList<String> getH2() {
+	return _h2;
+    }
+
+    public ArrayList<String> getH1() {
+	return _h1;
     }
 
     /*

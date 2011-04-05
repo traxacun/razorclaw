@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import net.sf.jsr107cache.Cache;
 import net.sf.jsr107cache.CacheException;
 import net.sf.jsr107cache.CacheManager;
+import razorclaw.object.Dictionaries.Status;
 import razorclaw.object.Webpage;
 import razorclaw.ranker.TFIDF;
 
@@ -48,13 +49,7 @@ public class RankTaskHandler extends HttpServlet {
 	    // tokenize, remove stopwords, stem, merge and etc.
 	    rank();
 	    // save rank result
-	    // save();
-
-	    // give the result
-	    // SortedMap<String, PhraseProperty> result = new TreeMap<String,
-	    // PhraseProperty>(
-	    // ));
-	    System.out.println(_webpage.getPhrases());
+	    save();
 
 	} else {
 	    LOG.severe("Wrong parameter \"domain\"");
@@ -75,7 +70,32 @@ public class RankTaskHandler extends HttpServlet {
     // }
 
     private void save() {
+	_webpage.setStatus(Status.RANKED);
 
+	try {
+	    // save to memcache
+	    if ((_parseCache = CacheManager.getInstance().getCache(
+		    "parse_cache")) == null) {
+		_parseCache = CacheManager.getInstance().getCacheFactory()
+			.createCache(Collections.emptyMap());
+		// cache.put("crawl_cache", new HashMap<String, String>());
+		CacheManager.getInstance().registerCache("parse_cache",
+			_parseCache);
+	    }
+	    _parseCache.put(_domain, _webpage);
+
+	    // save the phrases to datastore
+	    // for (Entry<String, PhraseProperty> e : _webpage.getPhrases()
+	    // .entrySet()) {
+	    // PhraseStoreHandler.put(e.getKey(), e.getValue());
+	    // }
+
+	    // save the webpage to datastore
+	    // DomainStoreHandler.put(_forwardURL, _domain,
+	    // _webpage.getKeyPhrases());
+	} catch (CacheException e) {
+	    LOG.severe("Saving parse result failed");
+	}
     }
 
     private void load() {
@@ -96,11 +116,19 @@ public class RankTaskHandler extends HttpServlet {
 	} catch (CacheException e) {
 	    LOG.severe("Loading parse cache failed");
 	}
+
+	_webpage.setStatus(Status.RANKING);
     }
 
     private void rank() {
+	LOG.info("Ranking");
+
 	// TODO: introduce more ranker and finally use the ML ranker
-	TFIDF.rank(_webpage.getAPIMeta().getForwardURL(), _webpage.getPhrases());
+	try {
+	    TFIDF.rank(_webpage);
+	} catch (Exception e) {
+	    LOG.severe("Ranking Failed");
+	}
     }
 
     public static void createRankTask(String domain) {
