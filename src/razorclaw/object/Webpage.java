@@ -42,6 +42,8 @@ public class Webpage implements Serializable {
     private String _html; // store HTML string instead of DOM to implement
 			  // Serializable
 
+    private String _keyPhrases;
+
     public Webpage() {
 	_phrases = new HashMap<String, PhraseProperty>();
     }
@@ -132,7 +134,7 @@ public class Webpage implements Serializable {
     }
 
     // -----------------------getters and setters---------------------
-    public WebpageMeta getMeta() {
+    public WebpageMeta getWebpageMeta() {
 	return _webpageMeta;
     }
 
@@ -162,5 +164,13 @@ public class Webpage implements Serializable {
 
     public void setStatus(Status _status) {
 	this._status = _status;
+    }
+
+    public void setKeyPhrases(String _keyPhrases) {
+	this._keyPhrases = _keyPhrases;
+    }
+
+    public String getKeyPhrases() {
+	return _keyPhrases;
     }
 }

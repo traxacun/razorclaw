@@ -126,8 +126,8 @@ public class ParseTaskHandler extends HttpServlet {
 	    }
 
 	    // save the webpage to datastore
-	    // TODO: move this to ranker after getting the keyphrases
-	    DomainStoreHandler.put(_forwardURL, _domain, null);
+	    DomainStoreHandler.put(_forwardURL, _domain,
+		    _webpage.getKeyPhrases());
 	} catch (CacheException e) {
 	    LOG.severe("Saving parse result failed");
 	}
