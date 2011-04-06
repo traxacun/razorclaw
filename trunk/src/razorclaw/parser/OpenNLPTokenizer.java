@@ -3,91 +3,117 @@ package razorclaw.parser;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.logging.Logger;
+
+import opennlp.tools.sentdetect.SentenceDetector;
+import opennlp.tools.sentdetect.SentenceDetectorME;
+import opennlp.tools.sentdetect.SentenceModel;
 import opennlp.tools.tokenize.Tokenizer;
 import opennlp.tools.tokenize.TokenizerME;
 import opennlp.tools.tokenize.TokenizerModel;
 import opennlp.tools.util.InvalidFormatException;
-import opennlp.tools.sentdetect.SentenceDetector;
-import opennlp.tools.sentdetect.SentenceDetectorME;
-import opennlp.tools.sentdetect.SentenceModel;
 
 /**
- * use opennlp package to break content of a web page to phrases, 
- * collecting basic statistic at the same time
+ * use opennlp package to break content of a web page to phrases, collecting
+ * basic statistic at the same time
  * 
  * @author Shuai YUAN
- *
+ * 
  */
-public class OpenNLPTokenizer {
-    private static final String SENTENCE_DETECTOR_MODEL = "model/en-sent.bin";
-    private static final String TOKENIZER_MODEL = "model/en-token.bin";
+public class OpenNLPTokenizer implements ITokenizer {
+    private final String SENTENCE_DETECTOR_BASE = "model/LANG-sent.bin";
+    private final String TOKENIZER_BASE = "model/LANG-token.bin";
 
-    private static Tokenizer _tokenizer = null;
-    private static SentenceDetector _sentDetector = null;
+    private Tokenizer _tokenizer = null;
+    private SentenceDetector _sentDetector = null;
 
-    private OpenNLPTokenizer() {
-    }
+    private String _sentModel, _tokenModel;
+
+    private static final Logger LOG = Logger.getLogger(OpenNLPTokenizer.class
+	    .getName());
 
     /**
-     * load SentenceDetector and Tokenizer model; initialise static instances
-     * 
+     * 2-letter language code
      */
-    public static void init() {
+    private String _lang;
+
+    /**
+     * load SentenceDetector and Tokenizer model
+     */
+    private void init() {
+	// load corresponding language model
+	if (_lang.equals("da") ||
+		_lang.equals("de") ||
+		_lang.equals("en") ||
+		_lang.equals("nl") ||
+		_lang.equals("pt") ||
+		_lang.equals("se")) {
+
+	} else {
+	    // no model found for the language
+	    LOG.severe("No model found for the language " + _lang
+		    + ", using English as the default");
+	    _lang = "en";
+	}
+
+	_sentModel = SENTENCE_DETECTOR_BASE.replace("LANG", _lang);
+	LOG.info("Using sentence model: " + _sentModel);
+
+	_tokenModel = TOKENIZER_BASE.replace("LANG", _lang);
+	LOG.info("Using tokenizer model: " + _tokenModel);
+
 	try {
 	    // sentence detector model
 	    if (_sentDetector == null) {
 		_sentDetector = new SentenceDetectorME(new SentenceModel(
-			new FileInputStream(SENTENCE_DETECTOR_MODEL)));
+			new FileInputStream(_sentModel)));
 	    }
 	    if (_tokenizer == null) {
 		// tokenizer model
 		_tokenizer = new TokenizerME(new TokenizerModel(
-			new FileInputStream(TOKENIZER_MODEL)));
+			new FileInputStream(_tokenModel)));
 	    }
 
 	} catch (InvalidFormatException e) {
-	    // TODO Auto-generated catch block
+	    LOG.severe("Wrong language model format");
 	    e.printStackTrace();
 	} catch (FileNotFoundException e) {
-	    // TODO Auto-generated catch block
+	    LOG.severe("Language model file not found");
 	    e.printStackTrace();
 	} catch (IOException e) {
-	    // TODO Auto-generated catch block
+	    LOG.severe("Loading language model failed");
 	    e.printStackTrace();
 	}
     }
 
-    /**
-     * break a paragraph into sentences.
-     * 
-     * @param bodyText
-     * @return
-     */
-    public static String[] tokenizeToSentence(String bodyText) {
-	/*
-	 * List<String> retokenizedSentences = new ArrayList<String>(); for
-	 * (String sentence : sentDetector.sentDetect(bodyText)) { String[]
-	 * innerSentences = sentence.split("\\.' |\\. '");
-	 * 
-	 * for (int i = 0; i < innerSentences.length; i++) { if
-	 * (innerSentences[i].trim().length() > 0) { if ((innerSentences.length
-	 * == 1 && innerSentences[i] .length() < sentence.length()) || i + 1 !=
-	 * innerSentences.length) { innerSentences[i] += ".' "; }
-	 * retokenizedSentences.add(innerSentences[i]); } } }
-	 */
+    @Override
+    public ArrayList<String> tokenize(String text) {
+	init();
+	ArrayList<String> ret = new ArrayList<String>();
 
-	// return (String[]) retokenizedSentences.toArray(new String[0]);
-	// return sentDetector.sentDetect(bodyText);
-	return _sentDetector.sentDetect(bodyText);
+	String[] sents = _sentDetector.sentDetect(text);
+	if (sents != null && sents.length > 0) {
+	    for (String s : sents) {
+		String[] phrases = _tokenizer.tokenize(s);
+		if (phrases != null && phrases.length > 0) {
+		    for (String p : phrases) {
+			if (p != null && !p.isEmpty()) {
+			    ret.add(p);
+			}
+		    }
+		}
+	    }
+	}
+	return ret;
     }
 
-    /**
-     * break a sentence into phrases.
-     * 
-     * @param sentenceText
-     * @return
-     */
-    public static String[] tokenizeToPhrases(String sentenceText) {
-	return _tokenizer.tokenize(sentenceText);
+    // --------------------getter and setter------------------------
+    public void setLang(String _lang) {
+	this._lang = _lang;
+    }
+
+    public String getLang() {
+	return _lang;
     }
 }
