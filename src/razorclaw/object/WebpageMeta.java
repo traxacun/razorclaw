@@ -33,8 +33,9 @@ public class WebpageMeta implements Serializable {
     /**
      * These are non-formal metadata and may not exist in all webpages.
      */
-    private final String _language = "", _contentType = "", _charset = "",
-	    _date = "";
+    private String _language, _charset;
+
+    private final String _contentType = "", _date = "";
 
     // breaking into words would be faster than search in a long string
     private final ArrayList<String> _keywords, _description, _title, _h1, _h2;
@@ -163,6 +164,14 @@ public class WebpageMeta implements Serializable {
 
     public ArrayList<String> getH1() {
 	return _h1;
+    }
+
+    public void setLanguage(String _language) {
+	this._language = _language;
+    }
+
+    public void setCharset(String _charset) {
+	this._charset = _charset;
     }
 
     /*

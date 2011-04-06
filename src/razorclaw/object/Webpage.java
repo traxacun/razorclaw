@@ -3,7 +3,10 @@ package razorclaw.object;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.analysis.lang.LanguageIdentifier;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -44,47 +47,41 @@ public class Webpage implements Serializable {
 
     private String _keyPhrases;
 
+    private static final Logger LOG = Logger.getLogger(Webpage.class.getName());
+
     public Webpage() {
 	_phrases = new HashMap<String, PhraseProperty>();
+    }
+
+    private String detectLanguage(String text) {
+	LOG.info("Detecting language of the webpage");
+
+	LanguageIdentifier langIdentifier = new LanguageIdentifier(
+		new Configuration());
+
+	// always identify the language by content
+	String lang = langIdentifier.identify(text);
+
+	if (lang != null && !lang.isEmpty()) {
+	    _webpageMeta.setLanguage(lang);
+
+	    return lang;
+	} else {
+	    _webpageMeta.setLanguage("en"); // use English as default
+
+	    return "en";
+	}
     }
 
     public void parseHTML() {
 	try {
 	    // load body
 	    Document doc = Jsoup.parse(_html);
-
 	    Element body = doc.body();
 
-	    // tokenize to sentences
-	    OpenNLPTokenizer.init();
-	    _sentences = OpenNLPTokenizer.tokenizeToSentence(body.text());
-
-	    // tokenize to phrases
-	    PhraseProperty property;
-	    PorterStemmer stemmer = new PorterStemmer();
-	    for (String s : _sentences) {
-		for (String p : OpenNLPTokenizer.tokenizeToPhrases(s)) {
-		    // remove punctuation & non-ASCII chars
-		    p = TextUtils.removePunctuation(p);
-		    p = TextUtils.removeNonAlphabeticChars(p);
-		    p = p.toLowerCase().trim();
-
-		    // check if the phrase is valid
-		    if (p != null && !p.isEmpty()
-			    && !StopwordsHandler.isStopwords(p)) {
-			// stem
-			p = stemmer.stem(p);
-			if (_phrases.containsKey(p)) {
-			    _phrases.get(p).increaseOccurance();
-			} else {
-			    property = new PhraseProperty();
-			    property.setNew(true);
-			    _phrases.put(p, property);
-			}
-		    }
-		}
-	    }
 	    // load metadata
+	    PhraseProperty property;
+
 	    _webpageMeta = new WebpageMeta();
 	    _webpageMeta.parseMeta(doc);
 
@@ -128,6 +125,44 @@ public class Webpage implements Serializable {
 			(double) e.getValue().getOccurance() / _phrases.size());
 		e.getValue().setForwardURL(_apiMeta.getForwardURL());
 	    }
+
+	    // check the language to load corresponding model
+	    String lang = detectLanguage(body.text());
+	    if (lang.equals("da") ||
+		    lang.equals("de") ||
+		    lang.equals("en") ||
+		    lang.equals("nl") ||
+		    lang.equals("pt") ||
+		    lang.equals("se")) {
+		// supported by opennlp
+		OpenNLPTokenizer opennlpTokenizer = new OpenNLPTokenizer();
+
+		// tokenize to phrases
+		PorterStemmer stemmer = new PorterStemmer();
+		for (String p : opennlpTokenizer.tokenize(body.text())) {
+		    p = TextUtils.removePunctuation(p);
+		    p = TextUtils.removeNonAlphabeticChars(p);
+		    p = p.toLowerCase().trim();
+
+		    // check if the phrase is valid
+		    if (p != null && !p.isEmpty()
+				    && !StopwordsHandler.isStopwords(p)) {
+			// stem
+			p = stemmer.stem(p);
+			if (_phrases.containsKey(p)) {
+			    _phrases.get(p).increaseOccurance();
+			} else {
+			    property = new PhraseProperty();
+			    property.setNew(true);
+			    _phrases.put(p, property);
+			}
+		    }
+		}
+	    } else {
+
+		LOG.severe("Not supported language");
+	    }
+
 	} catch (Exception e) {
 	    _status = Status.FAILED;
 	}
