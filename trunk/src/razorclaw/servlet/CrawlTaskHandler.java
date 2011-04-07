@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServlet;
@@ -20,8 +19,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import razorclaw.object.APIMeta;
 import razorclaw.object.Webpage;
@@ -159,32 +156,32 @@ public class CrawlTaskHandler extends HttpServlet {
 	    Document doc = Jsoup.connect(_forwardURL).get();
 
 	    // detect the frameset
-	    if (doc.getElementsByTag("frameset") != null) {
-		String frameURL = null;
-
-		Elements elements = doc.getElementsByTag("frame");
-		if (elements != null) {
-		    for (Iterator<Element> it = elements.iterator(); it
-			    .hasNext();) {
-			Element e = it.next();
-			// find the content frame
-			if (e.attr("name") != null
-				&& e.attr("name")
-					.equals("dot_tk_frame_content")) {
-			    frameURL = e.attr("src");
-
-			    break;
-			}
-		    }
-		}
-
-		// use the frame content as webpage
-		if (frameURL != null && !frameURL.isEmpty()) {
-		    LOG.info("Crawling frame");
-
-		    doc = Jsoup.connect(frameURL).get();
-		}
-	    }
+	    // if (doc.getElementsByTag("frameset") != null) {
+	    // String frameURL = null;
+	    //
+	    // Elements elements = doc.getElementsByTag("frame");
+	    // if (elements != null) {
+	    // for (Iterator<Element> it = elements.iterator(); it
+	    // .hasNext();) {
+	    // Element e = it.next();
+	    // // find the content frame
+	    // if (e.attr("name") != null
+	    // && e.attr("name")
+	    // .equals("dot_tk_frame_content")) {
+	    // frameURL = e.attr("src");
+	    //
+	    // break;
+	    // }
+	    // }
+	    // }
+	    //
+	    // // use the frame content as webpage
+	    // if (frameURL != null && !frameURL.isEmpty()) {
+	    // LOG.info("Crawling frame");
+	    //
+	    // doc = Jsoup.connect(frameURL).get();
+	    // }
+	    // }
 
 	    // save HTML text instead of DOM
 	    // Document is not Serializable therefore couldn't be saved to cache
@@ -197,7 +194,8 @@ public class CrawlTaskHandler extends HttpServlet {
 
     /**
      * some users setup multiple dot.tk domains referring to the same URL. check
-     * if the destination webpage exists in the cache, use forwardurl as the key
+     * if the destination webpage exists in the cache, using forwardURL as the
+     * key
      */
     private boolean checkCache() {
 	LOG.info("Check crawling cache");
