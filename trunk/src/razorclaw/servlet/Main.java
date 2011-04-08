@@ -1,17 +1,14 @@
 package razorclaw.servlet;
 
 import java.io.IOException;
-import java.util.Collections;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.sf.jsr107cache.Cache;
-import net.sf.jsr107cache.CacheException;
-import net.sf.jsr107cache.CacheManager;
-import razorclaw.object.Dictionaries.Status;
-import razorclaw.object.Webpage;
+import com.cybozu.labs.langdetect.Detector;
+import com.cybozu.labs.langdetect.DetectorFactory;
+import com.cybozu.labs.langdetect.LangDetectException;
 
 @SuppressWarnings("serial")
 public class Main extends HttpServlet {
@@ -41,33 +38,51 @@ public class Main extends HttpServlet {
 	// ex.printStackTrace();
 	// }
 
-	CrawlTaskHandler.createCrawlTask(req.getParameter("domain"));
+	// CrawlTaskHandler.createCrawlTask(req.getParameter("domain"));
 
 	// poll and output the result
 
+	// try {
+	// Cache cache;
+	// if ((cache = CacheManager.getInstance().getCache("parse_cache")) ==
+	// null) {
+	// cache = CacheManager.getInstance().getCacheFactory()
+	// .createCache(Collections.emptyMap());
+	// // cache.put("crawl_cache", new HashMap<String, String>());
+	// CacheManager.getInstance().registerCache("parse_cache", cache);
+	// }
+	// while (true) {
+	// Webpage webpage = (Webpage) cache.get(req
+	// .getParameter("domain").toLowerCase());
+	//
+	// if (webpage != null && webpage.getStatus() == Status.RANKED) {
+	// resp.getWriter().println(webpage.getPhrases());
+	// break;
+	// } else {
+	// Thread.sleep(2000);
+	// }
+	// }
+	// } catch (CacheException e) {
+	//
+	// } catch (InterruptedException e) {
+	//
+	// }
+
+	// test the language detector
+	Detector detector = null;
 	try {
-	    Cache cache;
-	    if ((cache = CacheManager.getInstance().getCache("parse_cache")) == null) {
-		cache = CacheManager.getInstance().getCacheFactory()
-			.createCache(Collections.emptyMap());
-		// cache.put("crawl_cache", new HashMap<String, String>());
-		CacheManager.getInstance().registerCache("parse_cache", cache);
-	    }
-	    while (true) {
-		Webpage webpage = (Webpage) cache.get(req
-			.getParameter("domain").toLowerCase());
+	    DetectorFactory.loadProfile("lang-profiles");
+	} catch (Exception e) {
+	}
+	try {
+	    detector = DetectorFactory.create();
+	    detector.append(req.getParameter("domain"));
 
-		if (webpage != null && webpage.getStatus() == Status.RANKED) {
-		    resp.getWriter().println(webpage.getPhrases());
-		    break;
-		} else {
-		    Thread.sleep(2000);
-		}
-	    }
-	} catch (CacheException e) {
+	    String lang;
+	    lang = detector.detect();
+	    resp.getWriter().println(lang);
 
-	} catch (InterruptedException e) {
-
+	} catch (LangDetectException e) {
 	}
 
     }
