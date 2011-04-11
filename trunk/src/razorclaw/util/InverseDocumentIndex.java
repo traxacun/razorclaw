@@ -26,15 +26,12 @@ import com.google.appengine.api.labs.taskqueue.TaskOptions;
 public class InverseDocumentIndex extends HttpServlet {
     private static final long serialVersionUID = -3923252430330491422L;
 
+    private final String TOP100 = "http://www.stats.tk/ucl/top100";
+
     @Override
-    public void doPost(HttpServletRequest req, HttpServletResponse resp)
+    public void doGet(HttpServletRequest req, HttpServletResponse resp)
 	    throws IOException {
-	String url;
-	if ((url = req.getParameter("url")) == null) {
-
-	}
-
-	DomainList list = JSON.decode(Jsoup.connect(url).get().text(),
+	DomainList list = JSON.decode(Jsoup.connect(TOP100).get().text(),
 		DomainList.class);
 
 	for (String domain : list.getDomains()) {
@@ -42,11 +39,11 @@ public class InverseDocumentIndex extends HttpServlet {
 	}
     }
 
-    private void createTask(String url) {
+    private void createTask(String domain) {
 	try {
 	    Queue queue = QueueFactory.getQueue("util-queue");
-	    queue.add(TaskOptions.Builder.url("/Main")
-		    .param("url", url).param("buildIndex", "1"));
+	    queue.add(TaskOptions.Builder.url("/razorclaw")
+		    .param("domain", domain).param("buildIndex", "1"));
 	} catch (Exception ex) {
 	    ex.printStackTrace();
 	}

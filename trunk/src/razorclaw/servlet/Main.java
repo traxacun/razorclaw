@@ -120,18 +120,22 @@ public class Main extends HttpServlet {
 	    _status = Status.CRAWLING;
 	    // ------------crawl part-----------------
 	    _webpage = new Webpage();
-
+	    LOG.info("Crawling metadata from stats.tk API");
 	    crawlAPIMeta();
 
+	    LOG.info("Check crawling cache");
 	    if (true == checkCache()) {
+		LOG.info("Loading webpage cache");
 		loadCache();
 	    } else {
+		LOG.info("Crawling webpage");
 		crawlWebpage();
 	    }
 	    _status = Status.CRAWLED;
 	    // -------------parse part----------------
 	    _status = Status.PARSING;
 	    _phrases = new HashMap<String, PhraseProperty>();
+	    LOG.info("Parsing HTML");
 	    parseHTML();
 
 	    _status = Status.PARSED;
@@ -141,6 +145,7 @@ public class Main extends HttpServlet {
 		// -------------rank part-----------------
 		_status = Status.RANKING;
 
+		LOG.info("Ranking phrases");
 		BM25F.rank(_webpageMeta, _phrases);
 
 		_status = Status.RANKED;
@@ -152,10 +157,12 @@ public class Main extends HttpServlet {
 	    }
 
 	    // --------always save inverse document index ------------
+	    LOG.info("Saving inverse document index");
 	    saveIndex();
 
 	} catch (Exception e) {
-
+	    e.printStackTrace();
+	    LOG.severe("Generating keyphrase failed");
 	}
     }
 
@@ -186,8 +193,6 @@ public class Main extends HttpServlet {
     }
 
     private void crawlAPIMeta() {
-	LOG.info("Crawling metadata from stats.tk API");
-
 	// use while loop to survive the timeout exception
 	_forwardURL = null;
 	while (_forwardURL == null || _forwardURL.isEmpty()) {
@@ -210,8 +215,6 @@ public class Main extends HttpServlet {
      * key
      */
     private boolean checkCache() {
-	LOG.info("Check crawling cache");
-
 	try {
 	    if ((_crawlCache = CacheManager.getInstance().getCache(
 		    "crawl_cache")) == null) {
@@ -234,8 +237,6 @@ public class Main extends HttpServlet {
      * load a webpage from memcache if it's already crawled
      */
     private void loadCache() {
-	LOG.info("Loading webpage cache");
-
 	try {
 	    if ((_crawlCache = CacheManager.getInstance().getCache(
 		    "crawl_cache")) == null) {
@@ -281,7 +282,6 @@ public class Main extends HttpServlet {
      * crawl HTML using _forwardURL instead of _domain
      */
     private void crawlWebpage() {
-	LOG.info("Crawling webpage");
 	try {
 	    // get webpage
 	    // store HTML instead of DOM which is not serializable
@@ -297,9 +297,8 @@ public class Main extends HttpServlet {
     /**
      * detect the language of _webpage.getText();
      * 
-     * @return
      */
-    private String detectLanguage() {
+    private void detectLanguage() {
 	LOG.info("Detecting language of the webpage");
 	try {
 	    DetectorFactory.loadProfile("lang-profiles/");
@@ -309,12 +308,11 @@ public class Main extends HttpServlet {
 	try {
 	    Detector detector = DetectorFactory.create();
 	    detector.append(_webpage.getText());
+	    _webpageMeta.setLanguage(detector.detect());
+	    LOG.info("Language: " + _webpageMeta.getLanguage());
 
-	    return detector.detect();
 	} catch (Exception e) {
 	    LOG.severe("Detecting language of the webpage failed");
-
-	    return "en";
 	}
     }
 
@@ -372,8 +370,12 @@ public class Main extends HttpServlet {
 	    }
 
 	    // check the language to load corresponding model
-	    String lang = detectLanguage();
-	    if (lang.equals("da") ||
+	    detectLanguage();
+	    String lang = _webpageMeta.getLanguage();
+	    if (lang == null) {
+		LOG.severe("Not supported language");
+		_status = Status.FAILED;
+	    } else if (lang.equals("da") ||
 		    lang.equals("de") ||
 		    lang.equals("en") ||
 		    lang.equals("nl") ||
@@ -381,6 +383,7 @@ public class Main extends HttpServlet {
 		    lang.equals("se")) {
 		// supported by opennlp
 		OpenNLPTokenizer opennlpTokenizer = new OpenNLPTokenizer();
+		opennlpTokenizer.setLang(lang);
 
 		// tokenize to phrases
 		// load body
@@ -413,7 +416,10 @@ public class Main extends HttpServlet {
 	    }
 
 	} catch (Exception e) {
+	    e.printStackTrace();
+
 	    _status = Status.FAILED;
+	    LOG.severe("Parsing HTML failed");
 	}
     }
 
@@ -444,6 +450,7 @@ public class Main extends HttpServlet {
 	}
 
 	// save the webpage to datastore
-	DomainStoreHandler.put(_forwardURL, _domain);
+	DomainStoreHandler
+		.put(_forwardURL, _domain, _webpageMeta.getLanguage());
     }
 }

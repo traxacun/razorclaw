@@ -16,4 +16,8 @@
 		<name>rank-queue</name>
 		<rate>5/s</rate>
 	</queue>
+	<queue>
+		<name>util-queue</name>
+		<rate>5/s</rate>
+	</queue>
 </queue-entries>

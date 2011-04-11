@@ -56,9 +56,11 @@ public class PhraseStoreHandler {
 	    properties = new ArrayList<PhraseProperty>();
 	    pp.setNew(true);
 	    properties.add(pp);
+
+	    savePhrase(phrase);
+
 	    _cache.put(phrase, properties);
 	}
-
 	updateAccessCounter();
     }
 
@@ -86,7 +88,7 @@ public class PhraseStoreHandler {
 		if (e.getValue() != null) {
 		    for (PhraseProperty pp : e.getValue()) {
 			if (pp.isNew()) {
-			    putToDS(e.getKey(), pp);
+			    saveProperty(e.getKey(), pp);
 			}
 		    }
 		}
@@ -148,11 +150,18 @@ public class PhraseStoreHandler {
 
 		properties.add(pp);
 	    }
-	    if (!properties.isEmpty()) { // leftover
+	    if (properties != null && !properties.isEmpty()) { // leftover
 		_cache.put(phrase, properties);
 	    }
 	}
 
+    }
+
+    private static void savePhrase(String phrase) {
+	Entity phraseEntity = new Entity("Phrase", phrase);
+	phraseEntity.setProperty("phrase", phrase);
+
+	_datastore.put(phraseEntity);
     }
 
     /**
@@ -163,9 +172,8 @@ public class PhraseStoreHandler {
      * @param phrase
      * @param pp
      */
-    private static void putToDS(String phrase, PhraseProperty pp) {
+    private static void saveProperty(String phrase, PhraseProperty pp) {
 	Entity phraseEntity = new Entity("Phrase", phrase);
-	phraseEntity.setProperty("phrase", phrase);
 
 	Entity propertyEntity = new Entity("PhraseProperty",
 		phraseEntity.getKey());
@@ -188,7 +196,6 @@ public class PhraseStoreHandler {
 	// propertyEntity.setProperty("InH1", pp.isH1());
 	// propertyEntity.setProperty("InH2", pp.isH2());
 
-	_datastore.put(phraseEntity);
 	_datastore.put(propertyEntity);
     }
 
