@@ -20,7 +20,6 @@ import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-import razorclaw.object.APIMeta;
 import razorclaw.object.Webpage;
 
 import com.google.appengine.api.labs.taskqueue.Queue;
@@ -133,10 +132,10 @@ public class CrawlTaskHandler extends HttpServlet {
 		JSONObject jsonobj = new JSONObject(content);
 
 		// parse the response
-		APIMeta apiMeta = new APIMeta(jsonobj);
-		_webpage.setAPIMeta(apiMeta);
-
-		_forwardURL = apiMeta.getForwardURL();
+		// APIMeta apiMeta = new APIMeta(jsonobj);
+		// _webpage.setAPIMeta(apiMeta);
+		//
+		// _forwardURL = apiMeta.getForwardURL();
 	    } catch (IOException e) {
 		LOG.warning("Crawling metadata from stats.tk API failed");
 	    } catch (JSONException e) {

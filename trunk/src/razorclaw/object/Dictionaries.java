@@ -119,6 +119,8 @@ public class Dictionaries implements Serializable {
 	PARSED,
 	RANKING,
 	RANKED,
+	SORTING,
+	SORTED,
 	FAILED,
 	FINISHED
 	// keyword updated

@@ -2,7 +2,6 @@ package razorclaw.servlet;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServlet;
@@ -12,10 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 import net.sf.jsr107cache.Cache;
 import net.sf.jsr107cache.CacheException;
 import net.sf.jsr107cache.CacheManager;
-import razorclaw.datastore.DomainStoreHandler;
-import razorclaw.datastore.PhraseStoreHandler;
-import razorclaw.object.Dictionaries.Status;
-import razorclaw.object.PhraseProperty;
 import razorclaw.object.Webpage;
 
 import com.google.appengine.api.labs.taskqueue.Queue;
@@ -50,14 +45,14 @@ public class ParseTaskHandler extends HttpServlet {
 		load();
 		// tokenize, remove stopwords, stem, merge and etc.
 		parse();
-		if (_webpage.getStatus() != Status.FAILED) {
-		    // save parse result
-		    save();
-
-		    RankTaskHandler.createRankTask(_domain);
-		} else {
-		    LOG.severe("Parse failed for URL: " + _forwardURL);
-		}
+		// if (_webpage.getStatus() != Status.FAILED) {
+		// // save parse result
+		// save();
+		//
+		// RankTaskHandler.createRankTask(_domain);
+		// } else {
+		// LOG.severe("Parse failed for URL: " + _forwardURL);
+		// }
 	    } else {
 		LOG.severe("Wrong parameter \"forwardURL\"");
 	    }
@@ -88,20 +83,20 @@ public class ParseTaskHandler extends HttpServlet {
     }
 
     private void parse() {
-	if (_webpage != null) {
-	    LOG.info("Parsing the webpage");
-
-	    _webpage.setStatus(Status.PARSING);
-
-	    _webpage.parseHTML();
-	    if (_webpage.getStatus() != Status.FAILED) {
-		_webpage.setStatus(Status.PARSED);
-	    } else {
-
-	    }
-	} else {
-	    LOG.severe("Parsing the webpage failed");
-	}
+	// if (_webpage != null) {
+	// LOG.info("Parsing the webpage");
+	//
+	// _webpage.setStatus(Status.PARSING);
+	//
+	// _webpage.parseHTML();
+	// if (_webpage.getStatus() != Status.FAILED) {
+	// _webpage.setStatus(Status.PARSED);
+	// } else {
+	//
+	// }
+	// } else {
+	// LOG.severe("Parsing the webpage failed");
+	// }
     }
 
     private void save() {
@@ -120,14 +115,14 @@ public class ParseTaskHandler extends HttpServlet {
 	    _parseCache.put(_domain, _webpage);
 
 	    // save the phrases to datastore
-	    for (Entry<String, PhraseProperty> e : _webpage.getPhrases()
-		    .entrySet()) {
-		PhraseStoreHandler.put(e.getKey(), e.getValue());
-	    }
+	    // for (Entry<String, PhraseProperty> e : _webpage.getPhrases()
+	    // .entrySet()) {
+	    // PhraseStoreHandler.put(e.getKey(), e.getValue());
+	    // }
 
 	    // save the webpage to datastore
-	    DomainStoreHandler.put(_forwardURL, _domain,
-		    _webpage.getKeyPhrases());
+	    // DomainStoreHandler.put(_forwardURL, _domain,
+	    // _webpage.getKeyPhrases());
 	} catch (CacheException e) {
 	    LOG.severe("Saving parse result failed");
 	}
