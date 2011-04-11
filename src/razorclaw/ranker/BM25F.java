@@ -87,7 +87,7 @@ public class BM25F {
 			    / _avgContentLength);
 
 	    // IDF
-	    int documentCount = PhraseStoreHandler.get(e.getKey()).size();
+	    int documentCount = PhraseStoreHandler.get(e.getKey()).size() + 1;
 	    double idfScore = Math.log((DomainStoreHandler.getDocumentsNumber()
 		    - documentCount + 0.5)
 		    / (documentCount + 0.5));
