@@ -11,9 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import net.sf.jsr107cache.Cache;
 import net.sf.jsr107cache.CacheException;
 import net.sf.jsr107cache.CacheManager;
-import razorclaw.object.Dictionaries.Status;
 import razorclaw.object.Webpage;
-import razorclaw.ranker.TFIDF;
 
 import com.google.appengine.api.labs.taskqueue.Queue;
 import com.google.appengine.api.labs.taskqueue.QueueFactory;
@@ -70,7 +68,7 @@ public class RankTaskHandler extends HttpServlet {
     // }
 
     private void save() {
-	_webpage.setStatus(Status.RANKED);
+	// _webpage.setStatus(Status.RANKED);
 
 	try {
 	    // save to memcache
@@ -117,7 +115,7 @@ public class RankTaskHandler extends HttpServlet {
 	    LOG.severe("Loading parse cache failed");
 	}
 
-	_webpage.setStatus(Status.RANKING);
+	// _webpage.setStatus(Status.RANKING);
     }
 
     private void rank() {
@@ -125,7 +123,7 @@ public class RankTaskHandler extends HttpServlet {
 
 	// TODO: introduce more ranker and finally use the ML ranker
 	try {
-	    TFIDF.rank(_webpage);
+	    // TFIDF.rank(_webpage);
 	} catch (Exception e) {
 	    LOG.severe("Ranking Failed");
 	}

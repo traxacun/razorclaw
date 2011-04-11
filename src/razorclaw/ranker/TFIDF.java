@@ -1,11 +1,11 @@
 package razorclaw.ranker;
 
+import java.util.HashMap;
 import java.util.Map.Entry;
 
 import razorclaw.datastore.DomainStoreHandler;
 import razorclaw.datastore.PhraseStoreHandler;
 import razorclaw.object.PhraseProperty;
-import razorclaw.object.Webpage;
 
 /**
  * TFIDF ranker for generating scores for a given list of phrases extracted from
@@ -20,11 +20,11 @@ public class TFIDF {
      * compute the TFIDF score for all phrases in the given document
      * 
      */
-    public static void rank(Webpage webpage) {
-	if (webpage.getPhrases() != null) {
+    public static void rank(HashMap<String, PhraseProperty> phrases) {
+	if (phrases != null) {
 	    double tfScore, idfScore, score;
 
-	    for (Entry<String, PhraseProperty> e : webpage.getPhrases()
+	    for (Entry<String, PhraseProperty> e : phrases
 		    .entrySet()) {
 		// get the TF
 		tfScore = e.getValue().getTFScore();

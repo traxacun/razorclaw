@@ -48,11 +48,11 @@ public class PhraseStoreHandler {
 	if (properties != null) { // phrase existing?
 	    if (properties.contains(pp)) { // forwardURL existing?
 
-	    } else {
+	    } else { // new property
 		pp.setNew(true);
 		properties.add(pp);
 	    }
-	} else {
+	} else { // new phrase
 	    properties = new ArrayList<PhraseProperty>();
 	    pp.setNew(true);
 	    properties.add(pp);
@@ -158,7 +158,7 @@ public class PhraseStoreHandler {
     /**
      * save a new PhraseProperty entity to datastore
      * 
-     * NOTE: duplicate check is ignored
+     * NOTE: duplicate check is ignored. checked at put().
      * 
      * @param phrase
      * @param pp

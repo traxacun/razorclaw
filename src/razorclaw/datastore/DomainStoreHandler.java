@@ -1,7 +1,6 @@
 package razorclaw.datastore;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,7 +10,6 @@ import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Query;
-import com.google.appengine.api.datastore.Query.FilterOperator;
 
 /**
  * save or load dot.tk domain entities from datastore. the structure is
@@ -29,20 +27,15 @@ public class DomainStoreHandler {
      */
     static class SimpleDomainEntity {
 	private String _domain;
-	/**
-	 * we pair KeyPhrase with Domain rather than webpage since the KeyPhrase
-	 * may vary due to the information related to Domain
-	 */
-	private String _keyPhrase;
+
+	private String _language;
 	/**
 	 * if existing in datastore
 	 */
 	private boolean _new;
 
-	public SimpleDomainEntity(String domain, String keyPhrase,
-		boolean newEntry) {
+	public SimpleDomainEntity(String domain, boolean newEntry) {
 	    _domain = domain;
-	    _keyPhrase = keyPhrase;
 	    _new = newEntry;
 	}
 
@@ -62,17 +55,17 @@ public class DomainStoreHandler {
 	    return _domain;
 	}
 
-	public void setKeyPhrase(String _keyPhrase) {
-	    this._keyPhrase = _keyPhrase;
-	}
-
-	public String getKeyPhrase() {
-	    return _keyPhrase;
-	}
-
 	@Override
 	public boolean equals(Object domain) {
 	    return _domain.equals(domain);
+	}
+
+	public void setLanguage(String _language) {
+	    this._language = _language;
+	}
+
+	public String getLanguage() {
+	    return _language;
 	}
     }
 
@@ -113,18 +106,28 @@ public class DomainStoreHandler {
      * @param forwardURL
      * @param domain
      */
-    private static void putToDS(String forwardURL, String domain,
-	    String keyPhrase) {
+    private static void saveDomain(String forwardURL, String domain,
+	    String language) {
 	Entity pageEntity = new Entity("ForwardURL", forwardURL);
-	pageEntity.setProperty("Name", forwardURL);
+	// pageEntity.setProperty("Name", forwardURL);
 
 	Entity domainEntity = new Entity("Domain", pageEntity.getKey());
 	domainEntity.setProperty("Name", domain);
-	if (keyPhrase != null) {
-	    domainEntity.setProperty("KeyPhrase", keyPhrase);
-	}
-	_datastore.put(pageEntity);
+	domainEntity.setProperty("Language", language);
+
 	_datastore.put(domainEntity);
+    }
+
+    /**
+     * create a new forwardURL in datastore. invoked immediately after
+     * discovering a new one.
+     * 
+     * @param forwardURL
+     */
+    private static void saveForwardURL(String forwardURL) {
+	Entity urlEntity = new Entity("ForwardURL", forwardURL);
+
+	_datastore.put(urlEntity);
     }
 
     /**
@@ -136,22 +139,6 @@ public class DomainStoreHandler {
      */
     public static long getDocumentsNumber() {
 	return _cache.size();
-	/*
-	 * Query query = new Query("__Stat_Kind__");
-	 * 
-	 * List<Entity> result = _datastore.prepare(query).asList(
-	 * FetchOptions.Builder.withDefaults()); if (!result.isEmpty()) { for
-	 * (Entity e : result) { if
-	 * (e.getProperty("kind_name").equals("ForwardURL")) { return (Long)
-	 * e.getProperty("count"); } } } else { // if running locally, iterate
-	 * to get the total number query = new
-	 * Query("ForwardURL").setKeysOnly(); result =
-	 * _datastore.prepare(query).asList(
-	 * FetchOptions.Builder.withDefaults()); if (!result.isEmpty()) { return
-	 * result.size(); // NOTE: integer here } }
-	 * 
-	 * return 0;
-	 */
     }
 
     /**
@@ -173,13 +160,11 @@ public class DomainStoreHandler {
 
 		    domains = new ArrayList<SimpleDomainEntity>();
 		    domains.add(new SimpleDomainEntity((String) e
-			    .getProperty("Name"), (String) e
-			    .getProperty("KeyPhrase"), false));
+			    .getProperty("Name"), false));
 
 		} else if (forwardURL.equals(e.getParent().getName())) {
 		    domains.add(new SimpleDomainEntity((String) e
-			    .getProperty("Name"), (String) e
-			    .getProperty("KeyPhrase"), false));
+			    .getProperty("Name"), false));
 
 		} else if (!forwardURL.equals(e.getParent().getName())) {
 		    _cache.put(forwardURL, domains);
@@ -187,8 +172,7 @@ public class DomainStoreHandler {
 		    forwardURL = e.getParent().getName();
 		    domains = new ArrayList<DomainStoreHandler.SimpleDomainEntity>();
 		    domains.add(new SimpleDomainEntity((String) e
-			    .getProperty("Name"), (String) e
-			    .getProperty("KeyPhrase"), false));
+			    .getProperty("Name"), false));
 		}
 	    }
 	    if (!domains.isEmpty()) { // leftover
@@ -206,7 +190,7 @@ public class DomainStoreHandler {
 	    if (e.getValue() != null) {
 		for (SimpleDomainEntity dp : e.getValue()) {
 		    if (dp.isNew()) {
-			putToDS(e.getKey(), dp.getDomain(), dp.getKeyPhrase());
+			saveDomain(e.getKey(), dp.getDomain(), dp.getLanguage());
 		    }
 		}
 	    }
@@ -217,21 +201,17 @@ public class DomainStoreHandler {
      * get dot.tk domains for the given webpage
      * 
      * @param forwardURL
-     * @return a HashMap<Domain, KeyPhrase> for the given webpage
+     * @return
      */
-    public static HashMap<String, String> get(String forwardURL) {
-	HashMap<String, String> ret = new HashMap<String, String>();
-
-	ArrayList<SimpleDomainEntity> domains = _cache.get(forwardURL);
-	if (domains != null) {
-	    for (SimpleDomainEntity dp : domains) {
-		ret.put(dp.getDomain(), dp.getKeyPhrase());
-	    }
+    public static ArrayList<SimpleDomainEntity> get(String forwardURL) {
+	if (_cache == null) {
+	    load();
 	}
+	ArrayList<SimpleDomainEntity> domains = _cache.get(forwardURL);
 
 	updateAccessCounter();
 
-	return ret;
+	return domains;
     }
 
     /**
@@ -241,17 +221,17 @@ public class DomainStoreHandler {
      * @param domain
      * @return
      */
-    public static String getKeyPhrase(String domain) {
-	Query query = new Query("Domain");
-	query.addFilter("Name", FilterOperator.EQUAL, domain);
-
-	Entity result = _datastore.prepare(query).asSingleEntity();
-	if (result != null) {
-	    return (String) result.getProperty("KeyPhrase");
-	} else {
-	    return null;
-	}
-    }
+    // public static String getKeyPhrase(String domain) {
+    // Query query = new Query("Domain");
+    // query.addFilter("Name", FilterOperator.EQUAL, domain);
+    //
+    // Entity result = _datastore.prepare(query).asSingleEntity();
+    // if (result != null) {
+    // return (String) result.getProperty("KeyPhrase");
+    // } else {
+    // return null;
+    // }
+    // }
 
     /**
      * set a new dot.tk domain for the given webpage
@@ -259,23 +239,23 @@ public class DomainStoreHandler {
      * @param forwardURL
      * @param domain
      */
-    public static void put(String forwardURL, String domain, String keyPhrase) {
+    public static void put(String forwardURL, String domain) {
 	if (_cache == null) {
 	    load();
 	}
 
 	ArrayList<SimpleDomainEntity> domains = _cache.get(forwardURL);
-
-	if (domains == null) { // no dot.tk domain registered for the forwardURL
+	if (domains == null) { // forwardURL not existing?
 	    domains = new ArrayList<SimpleDomainEntity>();
-	    domains.add(new SimpleDomainEntity(domain, keyPhrase, true));
+	    domains.add(new SimpleDomainEntity(domain, true));
 	    _cache.put(forwardURL, domains);
-	} else {
-	    if (domains.contains(domain)) { // the dot.tk domain existing for
-					    // the forwardURL
 
+	    saveForwardURL(forwardURL);
+	} else { // forwardURL exists
+	    if (domains.contains(domain)) { // domain existing?
+		// exists, ignore
 	    } else {
-		domains.add(new SimpleDomainEntity(domain, keyPhrase, true));
+		domains.add(new SimpleDomainEntity(domain, true));
 	    }
 	}
 
@@ -323,12 +303,9 @@ public class DomainStoreHandler {
 	// save();
 
 	/*
-	 * load();
-	 * 
-	 * for (String s : DomainStoreHandler.get("forwardURL1")) {
+	 * load(); for (String s : DomainStoreHandler.get("forwardURL1")) {
 	 * System.out.println(s); } for (String s :
 	 * DomainStoreHandler.get("forwardURL3")) { System.out.println(s); }
-	 * 
 	 * System.out.println(DomainStoreHandler.getDocumentsNumber());
 	 */
     }

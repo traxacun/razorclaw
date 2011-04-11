@@ -1,11 +1,12 @@
 package razorclaw.ranker;
 
+import java.util.HashMap;
 import java.util.Map.Entry;
 
 import razorclaw.datastore.DomainStoreHandler;
 import razorclaw.datastore.PhraseStoreHandler;
 import razorclaw.object.PhraseProperty;
-import razorclaw.object.Webpage;
+import razorclaw.object.WebpageMeta;
 
 /**
  * for reference http://nlp.uned.es/~jperezi/Lucene-BM25/
@@ -33,17 +34,18 @@ public class BM25F {
     /**
      * 
      */
-    public static void rank(Webpage webpage) {
+    public static void rank(WebpageMeta webpageMeta,
+	    HashMap<String, PhraseProperty> phrases) {
 
 	// rank all phrases against the document
-	for (Entry<String, PhraseProperty> e : webpage.getPhrases().entrySet()) {
+	for (Entry<String, PhraseProperty> e : phrases.entrySet()) {
 	    // weight on different features
 	    // title
 	    double titleWeight = 0.0;
 	    if (e.getValue().isTitle()) {
 		titleWeight = _titleBoost
 			/ ((1 - _paraB) + _paraB
-				* webpage.getWebpageMeta().getTitle().size()
+				* webpageMeta.getTitle().size()
 				/ _avgTitleLength);
 	    }
 	    // meta keywords
@@ -51,7 +53,7 @@ public class BM25F {
 	    if (e.getValue().isMetaKeywords()) {
 		metaKeywordsWeight = _metaKeywordsBoost
 			/ ((1 - _paraB) + _paraB
-				* webpage.getWebpageMeta().getKeywords().size()
+				* webpageMeta.getKeywords().size()
 				/ _avgMetaKeywordsLength);
 	    }
 	    // meta description
@@ -59,7 +61,7 @@ public class BM25F {
 	    if (e.getValue().isMetaDescription()) {
 		metaDescriptionWeight = _metaDescriptionBoost
 			/ ((1 - _paraB) + _paraB
-				* webpage.getWebpageMeta().getDescription()
+				* webpageMeta.getDescription()
 					.size() / _avgMetaDescriptionLength);
 	    }
 	    // h1
@@ -67,7 +69,7 @@ public class BM25F {
 	    if (e.getValue().isH1()) {
 		h1Weight = _h1Boost
 			/ ((1 - _paraB) + _paraB
-				* webpage.getWebpageMeta().getH1().size()
+				* webpageMeta.getH1().size()
 				/ _avgH1Length);
 	    }
 	    // h2
@@ -75,13 +77,13 @@ public class BM25F {
 	    if (e.getValue().isH2()) {
 		h2Weight = _h2Boost
 			/ ((1 - _paraB) + _paraB
-				* webpage.getWebpageMeta().getH2().size()
+				* webpageMeta.getH2().size()
 				/ _avgH2Length);
 	    }
 	    // content
 	    double contentWeight = 0.0;
 	    contentWeight = _contentBoost
-		    / ((1 - _paraB) + _paraB * webpage.getPhrases().size()
+		    / ((1 - _paraB) + _paraB * phrases.size()
 			    / _avgContentLength);
 
 	    // IDF
