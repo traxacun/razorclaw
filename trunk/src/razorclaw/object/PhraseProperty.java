@@ -41,17 +41,20 @@ public class PhraseProperty implements Serializable {
 
 	_isTitle = _isH1 = _isH2 = _isMetaKeywords = _isMetaDescription = _isCapital = false;
 
-	_isNew = false;
+	_isNew = true;
 
 	_partOfSpeech = PartOfSpeech.UNSPECIFIED;
     }
 
     @Override
     public String toString() {
-	return "Occurance: " + _occurance + " TFScore: " + _tfScore
+	return "Occurance: " + _occurance + " BM25F: " + _bm25fScore
 		+ " TFIDFScore: " + _tfidfScore + "\n";
     }
 
+    /**
+     * override to serve PhraseStoreHandler
+     */
     @Override
     public boolean equals(Object obj) {
 	return _forwardURL.equals(((PhraseProperty) obj).getForwardURL());
