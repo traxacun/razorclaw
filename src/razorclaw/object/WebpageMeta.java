@@ -9,7 +9,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import razorclaw.object.Dictionaries.HtmlVersion;
-import razorclaw.parser.TextUtils;
 
 /**
  * Stores metadata extracted from a webpage, including title, h1, h2, and
@@ -68,18 +67,22 @@ public class WebpageMeta implements Serializable {
 	while (it.hasNext()) {
 	    Element e = it.next();
 	    if (e.attr("name").equals("keywords")) {
-		String[] arr = TextUtils.removePunctuation(e.attr("content"))
-			.split(" ");
+		// NOTE: keywords are separated by comma
+		String[] arr = e.attr("content").split(",");
+
 		for (String s : arr) {
-		    if (!s.isEmpty()) {
+		    if (!s.trim().isEmpty()) {
 			_keywords.add(s);
 		    }
 		}
 	    } else if (e.attr("name").equals("description")) {
-		String[] arr = TextUtils.removePunctuation(e.attr("content"))
-			.split(" ");
+		// String content =
+		// TextUtils.removePunctuation(e.attr("content"));
+		// content = TextUtils.removeNonAlphabeticChars(content);
+		String[] arr = e.attr("content").split(" ");
+
 		for (String s : arr) {
-		    if (!s.isEmpty()) {
+		    if (!s.trim().isEmpty()) {
 			_description.add(s);
 		    }
 		}
@@ -89,10 +92,10 @@ public class WebpageMeta implements Serializable {
 	}
 
 	// title
-	String[] arr = TextUtils.removePunctuation(doc.title()).split(
-		TextUtils.replacePattern);
+	String[] arr = doc.title().split("");
+
 	for (String s : arr) {
-	    if (!s.isEmpty()) {
+	    if (!s.trim().isEmpty()) {
 		_title.add(s);
 	    }
 	}
@@ -100,10 +103,10 @@ public class WebpageMeta implements Serializable {
 	// h1
 	elements = doc.getElementsByTag("h1");
 	for (it = elements.iterator(); it.hasNext();) {
-	    arr = TextUtils.removePunctuation(it.next().text()).split(
-		    TextUtils.replacePattern);
+	    arr = it.next().text().split("");
+
 	    for (String s : arr) {
-		if (!s.isEmpty()) {
+		if (!s.trim().isEmpty()) {
 		    _h1.add(s);
 		}
 	    }
@@ -112,10 +115,10 @@ public class WebpageMeta implements Serializable {
 	// h2
 	elements = doc.getElementsByTag("h2");
 	for (it = elements.iterator(); it.hasNext();) {
-	    arr = TextUtils.removePunctuation(it.next().text()).split(
-		    TextUtils.replacePattern);
+	    arr = it.next().text().split("");
+
 	    for (String s : arr) {
-		if (!s.isEmpty()) {
+		if (!s.trim().isEmpty()) {
 		    _h2.add(s);
 		}
 	    }

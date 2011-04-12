@@ -1,5 +1,6 @@
 package razorclaw.ranker;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -87,7 +88,12 @@ public class BM25F {
 			    / _avgContentLength);
 
 	    // IDF
-	    int documentCount = PhraseStoreHandler.get(e.getKey()).size() + 1;
+	    ArrayList<PhraseProperty> properties = PhraseStoreHandler.get(e
+		    .getKey());
+	    int documentCount = 1;
+	    if (properties != null) {
+		documentCount = properties.size();
+	    }
 	    double idfScore = Math.log((DomainStoreHandler.getDocumentsNumber()
 		    - documentCount + 0.5)
 		    / (documentCount + 0.5));
@@ -95,7 +101,7 @@ public class BM25F {
 	    // final score
 	    double weightScore = titleWeight + metaKeywordsWeight
 		    + metaDescriptionWeight + h1Weight + h2Weight
-		    + contentWeight;
+		    + contentWeight + 0.5;
 	    double score = idfScore * weightScore / (_paraK + weightScore);
 
 	    // record the score
