@@ -89,6 +89,8 @@ public class PhraseStoreHandler {
 		    for (PhraseProperty pp : e.getValue()) {
 			if (pp.isNew()) {
 			    saveProperty(e.getKey(), pp);
+
+			    pp.setNew(false);
 			}
 		    }
 		}
