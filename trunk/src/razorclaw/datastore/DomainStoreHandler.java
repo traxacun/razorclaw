@@ -143,6 +143,9 @@ public class DomainStoreHandler {
      */
     public static long getDocumentsNumber() {
 	synchronized (_cache) {
+	    if (_cache.isEmpty()) {
+		load();
+	    }
 	    return _cache.size();
 	}
     }

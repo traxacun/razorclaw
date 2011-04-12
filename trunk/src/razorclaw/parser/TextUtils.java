@@ -3,7 +3,7 @@ package razorclaw.parser;
 import java.util.regex.Pattern;
 
 public class TextUtils {
-    public static final String replacePattern = "'s[.|,| ]|'[.|,| ]|[ |,]'|\"|^-|^&|^£|^$|[^[0-9],[0-9]|^a-zA-Z0-9]|,|:|;";
+    public static final String replacePattern = "'s[.|,| ]|'[.|,| ]|[ |,]'|\"|^-|^&|^£|^$|,|:|;";
     private static Pattern _pattern = Pattern.compile(replacePattern);
 
     public static String removePunctuation(String text) {
