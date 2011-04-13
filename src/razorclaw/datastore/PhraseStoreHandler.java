@@ -38,6 +38,10 @@ public class PhraseStoreHandler {
      * @param pp
      */
     public static void put(String phrase, PhraseProperty pp) {
+	if (phrase == null || phrase.isEmpty()) {
+	    return;
+	}
+
 	if (_cache != null) { // initialised or not
 
 	} else {
