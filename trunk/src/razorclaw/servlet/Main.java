@@ -31,6 +31,7 @@ import org.jsoup.nodes.Element;
 import razorclaw.datastore.DomainStoreHandler;
 import razorclaw.datastore.PhraseStoreHandler;
 import razorclaw.object.APIMeta;
+import razorclaw.object.APIMeta.RefererAnchorText;
 import razorclaw.object.Dictionaries.PartOfSpeech;
 import razorclaw.object.Dictionaries.Status;
 import razorclaw.object.PhraseProperty;
@@ -38,9 +39,9 @@ import razorclaw.object.Webpage;
 import razorclaw.object.WebpageMeta;
 import razorclaw.parser.OpenNLPPOSTagger;
 import razorclaw.parser.OpenNLPTokenizer;
-import razorclaw.parser.PorterStemmer;
 import razorclaw.parser.StopwordsHandler;
 import razorclaw.parser.TextUtils;
+import razorclaw.parser.stemmer.SremovalStemmer;
 import razorclaw.ranker.BM25F;
 
 import com.cybozu.labs.langdetect.Detector;
@@ -143,7 +144,8 @@ public class Main extends HttpServlet {
 	    _phrases = new HashMap<String, PhraseProperty>();
 	    LOG.info("Parsing HTML");
 	    parseHTML();
-	    System.out.println(_phrases);
+	    parseProperties();
+
 	    if (_status == Status.FAILED) {
 		return;
 	    }
@@ -156,7 +158,7 @@ public class Main extends HttpServlet {
 		_status = Status.RANKING;
 
 		LOG.info("Ranking phrases");
-		BM25F.rank(_webpageMeta, _phrases);
+		BM25F.rank(_webpageMeta, _apiMeta, _phrases);
 
 		_status = Status.RANKED;
 		// -------------sort and output------------
@@ -429,7 +431,7 @@ public class Main extends HttpServlet {
 		Element body = _doc.body();
 
 		// TODO: load proper stemmer according to languages
-		PorterStemmer stemmer = new PorterStemmer();
+		SremovalStemmer stemmer = new SremovalStemmer();
 
 		for (String p : opennlpTokenizer.tokenize(body.text())) {
 		    p = TextUtils.removePunctuation(p);
@@ -454,84 +456,6 @@ public class Main extends HttpServlet {
 		    }
 		}
 
-		for (String s : _webpageMeta.getTitle()) {
-		    s = TextUtils.removePunctuation(s);
-		    s = TextUtils.removeNonAlphabeticChars(s);
-		    s = s.toLowerCase().trim();
-		    if (s != null && !s.isEmpty()) {
-			s = stemmer.stem(s);
-			if (StopwordsHandler.isStopwords(s) || s.length() < 3) {
-			    continue;
-			}
-		    }
-
-		    if (_phrases.containsKey(s)) {
-			_phrases.get(s).setTitle(true).increaseOccurance();
-		    } else { // not exists
-			property = new PhraseProperty();
-			property.setTitle(true)
-				.setNew(true)
-				.setForwardURL(_forwardURL);
-
-			_phrases.put(s, property);
-		    }
-		}
-		for (String s : _webpageMeta.getKeywords()) {
-		    s = TextUtils.removePunctuation(s);
-		    s = TextUtils.removeNonAlphabeticChars(s);
-		    s = s.toLowerCase().trim();
-		    if (s != null && !s.isEmpty()) {
-			s = stemmer.stem(s);
-			if (StopwordsHandler.isStopwords(s) || s.length() < 3) {
-
-			} else {
-			    if (_phrases.containsKey(s)) {
-				_phrases.get(s).setMetaKeywords(true)
-					.increaseOccurance();
-			    } else { // not exists
-				property = new PhraseProperty();
-				property.setMetaKeywords(true)
-					.setNew(true)
-					.setForwardURL(_forwardURL);
-
-				_phrases.put(s, property);
-			    }
-			}
-		    }
-		}
-		for (String s : _webpageMeta.getDescription()) {
-		    s = TextUtils.removePunctuation(s);
-		    s = TextUtils.removeNonAlphabeticChars(s);
-		    s = s.toLowerCase().trim();
-		    if (s != null && !s.isEmpty()) {
-			s = stemmer.stem(s);
-			if (StopwordsHandler.isStopwords(s) || s.length() < 3) {
-			    continue;
-			} else {
-			    if (_phrases.containsKey(s)) {
-				_phrases.get(s).setMetaDescription(true)
-					.increaseOccurance();
-			    } else { // not exists
-				property = new PhraseProperty();
-				property.setMetaDescription(true)
-					.setNew(true)
-					.setForwardURL(_forwardURL);
-
-				_phrases.put(s, property);
-			    }
-			}
-		    }
-		}
-
-		// tag part-of-speech, TF
-		//@formatter:off
-		for (Entry<String, PhraseProperty> e : _phrases.entrySet()) {
-		    e.getValue().setPartOfSpeech(PartOfSpeech.load(OpenNLPPOSTagger.getWordTag(e.getKey())))
-				.setTFScore((double) e.getValue().getOccurance() / _phrases.size());
-		}
-		//@formatter:on
-
-		_status = Status.PARSED;
 	    } else {
 		LOG.severe("Not supported language");
 		_status = Status.FAILED;
@@ -565,6 +489,201 @@ public class Main extends HttpServlet {
 	    LOG.severe("Sort failed");
 	    logStackTrace(e);
 	}
+    }
+
+    /**
+     * check features for phrases in title, meta, anchor text, user/admin/spider
+     * keywords
+     */
+    private void parseProperties() {
+	SremovalStemmer stemmer = new SremovalStemmer();
+	PhraseProperty property;
+
+	// ---------title------------
+	for (String s : _webpageMeta.getTitle()) {
+	    s = TextUtils.removePunctuation(s);
+	    s = TextUtils.removeNonAlphabeticChars(s);
+	    s = s.toLowerCase().trim();
+	    if (s != null && !s.isEmpty()) {
+		s = stemmer.stem(s);
+		if (s == null || s.isEmpty() || StopwordsHandler.isStopwords(s)
+			|| s.length() < 3) {
+
+		} else {
+		    if (_phrases.containsKey(s)) {
+			_phrases.get(s).setTitle(true).increaseOccurance();
+		    } else { // not exists
+			property = new PhraseProperty();
+			property.setTitle(true)
+				.setNew(true)
+				.setForwardURL(_forwardURL);
+
+			_phrases.put(s, property);
+		    }
+		}
+	    }
+	}
+	// ------------metaKeywords-------------
+	for (String s : _webpageMeta.getKeywords()) {
+	    // s = TextUtils.removePunctuation(s);
+	    // s = TextUtils.removeNonAlphabeticChars(s);
+	    s = s.toLowerCase().trim();
+	    if (s != null && !s.isEmpty()) {
+		s = stemmer.stem(s);
+		if (s == null || s.isEmpty() || StopwordsHandler.isStopwords(s)
+			|| s.length() < 3) {
+
+		} else {
+		    if (_phrases.containsKey(s)) {
+			_phrases.get(s).setMetaKeywords(true)
+				.increaseOccurance();
+		    } else { // not exists
+			property = new PhraseProperty();
+			property.setMetaKeywords(true)
+				.setNew(true)
+				.setForwardURL(_forwardURL);
+
+			_phrases.put(s, property);
+		    }
+		}
+	    }
+	}
+	// -------------metaDescription--------------
+	for (String s : _webpageMeta.getDescription()) {
+	    // s = TextUtils.removePunctuation(s);
+	    // s = TextUtils.removeNonAlphabeticChars(s);
+	    s = s.toLowerCase().trim();
+	    if (s != null && !s.isEmpty()) {
+		s = stemmer.stem(s);
+		if (s == null || s.isEmpty() || StopwordsHandler.isStopwords(s)
+			|| s.length() < 3) {
+
+		} else {
+		    if (_phrases.containsKey(s)) {
+			_phrases.get(s).setMetaDescription(true)
+				.increaseOccurance();
+		    } else { // not exists
+			property = new PhraseProperty();
+			property.setMetaDescription(true)
+				.setNew(true)
+				.setForwardURL(_forwardURL);
+
+			_phrases.put(s, property);
+		    }
+		}
+	    }
+	}
+	// -------------anchor text--------------------
+	for (RefererAnchorText text : _apiMeta.getRefererAnchorTexts()) {
+	    String s = text.getAnchorText();
+	    // s = TextUtils.removePunctuation(s);
+	    // s = TextUtils.removeNonAlphabeticChars(s);
+	    s = s.toLowerCase().trim();
+	    if (s != null && !s.isEmpty()) {
+		s = stemmer.stem(s);
+		if (s == null || s.isEmpty() || StopwordsHandler.isStopwords(s)
+			|| s.length() < 3) {
+
+		} else {
+		    if (_phrases.containsKey(s)) {
+			_phrases.get(s).setAnchorText(true)
+				.increaseOccurance();
+		    } else { // not exists
+			property = new PhraseProperty();
+			property.setAnchorText(true)
+				.setNew(true)
+				.setForwardURL(_forwardURL);
+
+			_phrases.put(s, property);
+		    }
+		}
+	    }
+	}
+	// ------------------spider keywords-----------------
+	for (String s : _apiMeta.getSpiderKeywords()) {
+	    // s = TextUtils.removePunctuation(s);
+	    // s = TextUtils.removeNonAlphabeticChars(s);
+	    s = s.toLowerCase().trim();
+	    if (s != null && !s.isEmpty()) {
+		s = stemmer.stem(s);
+		if (s == null || s.isEmpty() || StopwordsHandler.isStopwords(s)
+			|| s.length() < 3) {
+
+		} else {
+		    if (_phrases.containsKey(s)) {
+			_phrases.get(s).setSpiderKeywords(true)
+				.increaseOccurance();
+		    } else { // not exists
+			property = new PhraseProperty();
+			property.setSpiderKeywords(true)
+				.setNew(true)
+				.setForwardURL(_forwardURL);
+
+			_phrases.put(s, property);
+		    }
+		}
+	    }
+	}
+	// ------------------admin keywords-----------------
+	for (String s : _apiMeta.getAdminKeywords()) {
+	    // s = TextUtils.removePunctuation(s);
+	    // s = TextUtils.removeNonAlphabeticChars(s);
+	    s = s.toLowerCase().trim();
+	    if (s != null && !s.isEmpty()) {
+		s = stemmer.stem(s);
+		if (s == null || s.isEmpty() || StopwordsHandler.isStopwords(s)
+			|| s.length() < 3) {
+
+		} else {
+		    if (_phrases.containsKey(s)) {
+			_phrases.get(s).setAdminKeywords(true)
+				.increaseOccurance();
+		    } else { // not exists
+			property = new PhraseProperty();
+			property.setAdminKeywords(true)
+				.setNew(true)
+				.setForwardURL(_forwardURL);
+
+			_phrases.put(s, property);
+		    }
+		}
+	    }
+	}
+	// ------------------user keywords-----------------
+	for (String s : _apiMeta.getUserKeywords()) {
+	    // s = TextUtils.removePunctuation(s);
+	    // s = TextUtils.removeNonAlphabeticChars(s);
+	    s = s.toLowerCase().trim();
+	    if (s != null && !s.isEmpty()) {
+		s = stemmer.stem(s);
+		if (s == null || s.isEmpty() || StopwordsHandler.isStopwords(s)
+			|| s.length() < 3) {
+
+		} else {
+		    if (_phrases.containsKey(s)) {
+			_phrases.get(s).setUserKeywords(true)
+				.increaseOccurance();
+		    } else { // not exists
+			property = new PhraseProperty();
+			property.setUserKeywords(true)
+				.setNew(true)
+				.setForwardURL(_forwardURL);
+
+			_phrases.put(s, property);
+		    }
+		}
+	    }
+	}
+
+	// tag part-of-speech, TF
+	//@formatter:off
+	for (Entry<String, PhraseProperty> e : _phrases.entrySet()) {
+	    e.getValue().setPartOfSpeech(PartOfSpeech.load(OpenNLPPOSTagger.getWordTag(e.getKey())))
+			.setTFScore((double) e.getValue().getOccurance() / _phrases.size());
+	}
+	//@formatter:on
+
+	_status = Status.PARSED;
     }
 
     /**

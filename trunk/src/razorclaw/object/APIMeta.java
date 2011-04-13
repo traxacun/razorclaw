@@ -15,8 +15,10 @@ public class APIMeta implements Serializable {
      */
     private static final long serialVersionUID = 5267241848326190002L;
 
-    private ArrayList<String> _spiderKeywords, _adminKeywords, _userKeywords;
+    private ArrayList<String> _adminKeywords, _userKeywords;
     private ArrayList<String> _referers;
+
+    private String _spiderKeywords;
 
     private ArrayList<VisitorCountry> _visitorCountries;
     private ArrayList<RefererAnchorText> _refererAnchorTexts;
@@ -63,10 +65,26 @@ public class APIMeta implements Serializable {
 	    this._anchorText = _anchorText;
 	}
 
-	public String getAnchor_text() {
+	public String getAnchorText() {
 	    return _anchorText;
 	}
 
+    }
+
+    /**
+     * NOTE: possible mismatch, like car-care
+     * 
+     * @param s
+     * @return
+     */
+    public boolean isAnchorText(String s) {
+	for (RefererAnchorText text : _refererAnchorTexts) {
+	    if (text.getAnchorText().contains(s)) {
+		return true;
+	    }
+	}
+
+	return false;
     }
 
     /**
@@ -158,7 +176,13 @@ public class APIMeta implements Serializable {
 
     // -----------------------getters and setters---------------------
     public ArrayList<String> getSpiderKeywords() {
-	return _spiderKeywords;
+	ArrayList<String> ret = new ArrayList<String>();
+	if (_spiderKeywords != null && !_spiderKeywords.isEmpty()) {
+	    for (String s : _spiderKeywords.split(" ")) {
+		ret.add(s);
+	    }
+	}
+	return ret;
     }
 
     public ArrayList<String> getAdminKeywords() {
@@ -193,7 +217,7 @@ public class APIMeta implements Serializable {
 	return _domainName;
     }
 
-    public void setSpider_keywords(ArrayList<String> obj) {
+    public void setSpider_keywords(String obj) {
 	_spiderKeywords = obj;
     }
 

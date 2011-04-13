@@ -24,7 +24,8 @@ public class PhraseProperty implements Serializable {
 	    _languageModelScore;
 
     private boolean _isTitle, _isH1, _isH2, _isMetaKeywords,
-	    _isMetaDescription, _isCapital;
+	    _isMetaDescription, _isCapital, _isAnchorText, _isSpiderKeywords,
+	    _isAdminKeywords, _isUserKeywords;
 
     private PartOfSpeech _partOfSpeech;
     /**
@@ -39,7 +40,8 @@ public class PhraseProperty implements Serializable {
 
 	_tfScore = _idfScore = _tfidfScore = _bm25fScore = _languageModelScore = 0.0;
 
-	_isTitle = _isH1 = _isH2 = _isMetaKeywords = _isMetaDescription = _isCapital = false;
+	_isTitle = _isH1 = _isH2 = _isMetaKeywords = _isMetaDescription = _isCapital
+		= _isAnchorText = _isAdminKeywords = _isUserKeywords = _isSpiderKeywords = false;
 
 	_isNew = true;
 
@@ -49,7 +51,7 @@ public class PhraseProperty implements Serializable {
     @Override
     public String toString() {
 	return "Occurance: " + _occurance + " BM25F: " + _bm25fScore
-		+ " TFIDFScore: " + _tfidfScore + "\n";
+		+ " isAnchor: " + _isAnchorText + "\n";
     }
 
     /**
@@ -199,6 +201,42 @@ public class PhraseProperty implements Serializable {
     public PhraseProperty increaseOccurance() {
 	_occurance++;
 	return this;
+    }
+
+    public PhraseProperty setAdminKeywords(boolean _isAdminKeywords) {
+	this._isAdminKeywords = _isAdminKeywords;
+	return this;
+    }
+
+    public boolean isAdminKeywords() {
+	return _isAdminKeywords;
+    }
+
+    public PhraseProperty setSpiderKeywords(boolean _isSpiderKeywords) {
+	this._isSpiderKeywords = _isSpiderKeywords;
+	return this;
+    }
+
+    public boolean isSpiderKeywords() {
+	return _isSpiderKeywords;
+    }
+
+    public PhraseProperty setAnchorText(boolean _isAnchorText) {
+	this._isAnchorText = _isAnchorText;
+	return this;
+    }
+
+    public boolean isAnchorText() {
+	return _isAnchorText;
+    }
+
+    public PhraseProperty setUserKeywords(boolean _isUserKeywords) {
+	this._isUserKeywords = _isUserKeywords;
+	return this;
+    }
+
+    public boolean isUserKeywords() {
+	return _isUserKeywords;
     }
 
 }
