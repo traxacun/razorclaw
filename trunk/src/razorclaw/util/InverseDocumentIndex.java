@@ -24,18 +24,20 @@ import com.google.appengine.api.labs.taskqueue.TaskOptions;
  */
 @SuppressWarnings("deprecation")
 public class InverseDocumentIndex extends HttpServlet {
-    private static final long serialVersionUID = -3923252430330491422L;
-
-    private final String TOP100 = "http://www.stats.tk/ucl/top100";
+    private static final long serialVersionUID = -3537756064086240288L;
 
     @Override
     public void doGet(HttpServletRequest req, HttpServletResponse resp)
 	    throws IOException {
-	DomainList list = JSON.decode(Jsoup.connect(TOP100).get().text(),
+	final String url = "http://www.stats.tk/ucl/top100";
+
+	DomainList list = JSON.decode(Jsoup.connect(url).get().text(),
 		DomainList.class);
 
-	for (String domain : list.getDomains()) {
+	for (int i = 0; i < list.getDomains().size() && i < 10; i++) {
+	    String domain = list.getDomains().get(i);
 	    createTask(domain);
+	    resp.getWriter().println("Created task for: " + domain);
 	}
     }
 

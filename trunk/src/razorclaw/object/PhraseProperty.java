@@ -59,7 +59,11 @@ public class PhraseProperty implements Serializable {
      */
     @Override
     public boolean equals(Object obj) {
-	return _forwardURL.equals(((PhraseProperty) obj).getForwardURL());
+	if (obj == null || _forwardURL == null) {
+	    return false;
+	} else {
+	    return _forwardURL.equals(((PhraseProperty) obj).getForwardURL());
+	}
     }
 
     // ------------------getter and setter-----------------------

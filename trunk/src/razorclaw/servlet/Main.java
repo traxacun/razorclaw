@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import net.arnx.jsonic.JSON;
 import net.sf.jsr107cache.Cache;
+import net.sf.jsr107cache.CacheFactory;
 import net.sf.jsr107cache.CacheManager;
 
 import org.jsoup.Jsoup;
@@ -76,6 +77,8 @@ public class Main extends HttpServlet {
 
     private KeyPhrase _keyPhrase;
 
+    private static Detector detector;
+
     /**
      * response the KeyPhrase in JSON
      * 
@@ -113,7 +116,18 @@ public class Main extends HttpServlet {
     }
 
     @Override
+    public void doGet(HttpServletRequest req, HttpServletResponse resp)
+	    throws IOException {
+	doExecute(req, resp);
+    }
+
+    @Override
     public void doPost(HttpServletRequest req, HttpServletResponse resp)
+	    throws IOException {
+	doExecute(req, resp);
+    }
+
+    public void doExecute(HttpServletRequest req, HttpServletResponse resp)
 	    throws IOException {
 	if ((_domain = req.getParameter("domain")) == null) {
 	    LOG.severe("Wrong parameter \"domain\"");
@@ -137,6 +151,7 @@ public class Main extends HttpServlet {
 	    } else {
 		LOG.info("Crawling webpage");
 		crawlWebpage();
+		saveCache();
 	    }
 	    _status = Status.CRAWLED;
 	    // -------------parse part----------------
@@ -149,6 +164,10 @@ public class Main extends HttpServlet {
 	    if (_status == Status.FAILED) {
 		return;
 	    }
+
+	    // --------always save inverse document index ------------
+	    LOG.info("Saving inverse document index");
+	    saveIndex();
 
 	    if (req.getParameter("buildIndex") != null
 		    && req.getParameter("buildIndex").equals("1")) {
@@ -169,10 +188,6 @@ public class Main extends HttpServlet {
 
 		_status = Status.FINISHED;
 	    }
-
-	    // --------always save inverse document index ------------
-	    LOG.info("Saving inverse document index");
-	    saveIndex();
 
 	} catch (Exception e) {
 	    LOG.severe("Generating keyphrase failed");
@@ -197,15 +212,17 @@ public class Main extends HttpServlet {
 		    - arg1.getValue().getBM25FScore() < 0) {
 		return 1;
 	    } else {
-		return 0;
+		if (arg0.getValue().getOccurance() > arg1.getValue()
+			.getOccurance()) {
+		    return -1;
+		} else if (arg0.getValue().getOccurance() < arg1.getValue()
+			.getOccurance()) {
+		    return 1;
+		} else {
+		    return 0;
+		}
 	    }
 	}
-    }
-
-    @Override
-    public void doGet(HttpServletRequest req, HttpServletResponse resp)
-	    throws IOException {
-	resp.getWriter().println("Get method not supported!");
     }
 
     private void crawlAPIMeta() {
@@ -278,7 +295,7 @@ public class Main extends HttpServlet {
 			_crawlCache);
 	    }
 
-	    _webpage = (Webpage) _crawlCache.get(_forwardURL);
+	    _webpage = (Webpage) _crawlCache.get("__crawl__" + _forwardURL);
 
 	} catch (Exception e) {
 	    LOG.severe("Loading webpage cache failed");
@@ -294,17 +311,11 @@ public class Main extends HttpServlet {
 	LOG.info("Saving crawl result for next step");
 
 	try {
-	    if ((_crawlCache = CacheManager.getInstance().getCache(
-		    "crawl_cache")) == null) {
-		_crawlCache = CacheManager.getInstance().getCacheFactory()
-			.createCache(Collections.emptyMap());
-		// cache.put("crawl_cache", new HashMap<String, String>());
-		CacheManager.getInstance().registerCache("crawl_cache",
-			_crawlCache);
-	    }
+	    CacheFactory cacheFactory = CacheManager.getInstance()
+		    .getCacheFactory();
+	    _crawlCache = cacheFactory.createCache(Collections.emptyMap());
 
-	    _crawlCache.put(_forwardURL, _webpage);
-
+	    _crawlCache.put("__crawl__" + _forwardURL, _webpage);
 	} catch (Exception e) {
 	    LOG.severe("Saving crawl result to cache failed");
 	    logStackTrace(e);
@@ -381,13 +392,26 @@ public class Main extends HttpServlet {
      */
     private void detectLanguage() {
 	LOG.info("Detecting language of the webpage");
-	try {
-	    DetectorFactory.loadProfile("lang-profiles/");
-	} catch (Exception e) {
-	    // profiles already loaded
+	if (detector == null) {
+	    try {
+		DetectorFactory.loadProfile("lang-profiles/");
+	    } catch (Exception e) {
+		// profiles already loaded
+	    }
+	    try {
+		detector = DetectorFactory.create();
+
+	    } catch (Exception e) {
+		LOG.severe("Detecting language of the webpage failed");
+		logStackTrace(e);
+	    }
 	}
 	try {
-	    Detector detector = DetectorFactory.create();
+	    if (_webpage == null) {
+		LOG.severe("Detecting language of the webpage failed");
+		return;
+	    }
+
 	    detector.append(_webpage.getText());
 	    _webpageMeta.setLanguage(detector.detect());
 	    LOG.info("Language: " + _webpageMeta.getLanguage());
@@ -423,8 +447,6 @@ public class Main extends HttpServlet {
 		    lang.equals("pt") ||
 		    lang.equals("se")) {
 		// supported by opennlp
-		OpenNLPTokenizer opennlpTokenizer = new OpenNLPTokenizer();
-		opennlpTokenizer.setLang(lang);
 
 		// tokenize to phrases
 		// load body
@@ -433,7 +455,7 @@ public class Main extends HttpServlet {
 		// TODO: load proper stemmer according to languages
 		SremovalStemmer stemmer = new SremovalStemmer();
 
-		for (String p : opennlpTokenizer.tokenize(body.text())) {
+		for (String p : OpenNLPTokenizer.tokenize(body.text(), lang)) {
 		    p = TextUtils.removePunctuation(p);
 		    p = TextUtils.removeNonAlphabeticChars(p);
 		    p = p.toLowerCase().trim();
@@ -482,9 +504,6 @@ public class Main extends HttpServlet {
 	    for (int i = 0; i < 3 && i < phrases.size(); i++) {
 		_keyPhrase.appendKeyPhrase(phrases.get(i).getKey());
 	    }
-
-	    System.out.println(phrases);
-
 	} catch (Exception e) {
 	    LOG.severe("Sort failed");
 	    logStackTrace(e);
