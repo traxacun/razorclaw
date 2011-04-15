@@ -1,9 +1,12 @@
 package razorclaw.datastore;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
+
+import net.sf.jsr107cache.Cache;
+import net.sf.jsr107cache.CacheManager;
 
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -25,7 +28,9 @@ public class DomainStoreHandler {
      * @author Shuai YUAN
      * 
      */
-    static class SimpleDomainEntity {
+    static class SimpleDomainEntity implements Serializable {
+	private static final long serialVersionUID = 3694451220038905611L;
+
 	private String _domain;
 
 	private String _language;
@@ -77,12 +82,7 @@ public class DomainStoreHandler {
     /**
      * local cache as <forwardURL, <domain, ...>>
      */
-    private static ConcurrentHashMap<String, ArrayList<SimpleDomainEntity>> _cache = new ConcurrentHashMap<String, ArrayList<SimpleDomainEntity>>();
-
-    private static int _accessCounter = 0;
-
-    // TODO: change to a appropriate value
-    private static final int UPDATE_THRESHOLD = 1;
+    private static Cache _cache;
 
     /**
      * check if a webpage(forwardURL) exists in the statistic datastore
@@ -91,17 +91,11 @@ public class DomainStoreHandler {
      * @return
      */
     public static boolean exists(String forwardURL) {
-	Query query = new Query("ForwardURL").setKeysOnly();
-	query.addFilter("Name", Query.FilterOperator.EQUAL, forwardURL);
-
-	if (_datastore.prepare(query)
-		    .asList(FetchOptions.Builder.withDefaults()).isEmpty()) {
-
-	    return false;
-	} else {
-
-	    return true;
+	if (_cache == null || _cache.isEmpty()) {
+	    load();
 	}
+
+	return _cache.containsKey(forwardURL);
     }
 
     /**
@@ -129,9 +123,13 @@ public class DomainStoreHandler {
      * @param forwardURL
      */
     private static void saveForwardURL(String forwardURL) {
-	Entity urlEntity = new Entity("ForwardURL", forwardURL);
+	if (forwardURL == null || forwardURL.isEmpty()) {
+	    return;
+	} else {
+	    Entity urlEntity = new Entity("ForwardURL", forwardURL);
 
-	_datastore.put(urlEntity);
+	    _datastore.put(urlEntity);
+	}
     }
 
     /**
@@ -143,9 +141,10 @@ public class DomainStoreHandler {
      */
     public static long getDocumentsNumber() {
 	synchronized (_cache) {
-	    if (_cache.isEmpty()) {
+	    if (_cache == null || _cache.isEmpty()) {
 		load();
 	    }
+
 	    return _cache.size();
 	}
     }
@@ -154,10 +153,19 @@ public class DomainStoreHandler {
      * load cache from datastore
      */
     private static void load() {
-	synchronized (_cache) {
+	try {
+	    // init local cache
+	    if ((_cache = CacheManager.getInstance().getCache(
+			"domain_cache")) == null) {
+		_cache = CacheManager.getInstance().getCacheFactory()
+			    .createCache(Collections.emptyMap());
+		CacheManager.getInstance().registerCache("domain_cache",
+			    _cache);
+	    }
+	    // load from datastore
 	    Query query = new Query("Domain");
 	    List<Entity> result = _datastore.prepare(query).asList(
-		    FetchOptions.Builder.withDefaults());
+			FetchOptions.Builder.withDefaults());
 	    if (result != null) {
 		String forwardURL = "";
 		ArrayList<SimpleDomainEntity> domains = null;
@@ -168,13 +176,13 @@ public class DomainStoreHandler {
 
 			domains = new ArrayList<SimpleDomainEntity>();
 			domains.add(new SimpleDomainEntity((String) e
-				.getProperty("Name"), (String) e
-				.getProperty("Language"), false));
+				    .getProperty("Name"), (String) e
+				    .getProperty("Language"), false));
 
 		    } else if (forwardURL.equals(e.getParent().getName())) {
 			domains.add(new SimpleDomainEntity((String) e
-				.getProperty("Name"), (String) e
-				.getProperty("Language"), false));
+				    .getProperty("Name"), (String) e
+				    .getProperty("Language"), false));
 
 		    } else if (!forwardURL.equals(e.getParent().getName())) {
 			_cache.put(forwardURL, domains);
@@ -182,8 +190,8 @@ public class DomainStoreHandler {
 			forwardURL = e.getParent().getName();
 			domains = new ArrayList<DomainStoreHandler.SimpleDomainEntity>();
 			domains.add(new SimpleDomainEntity((String) e
-				.getProperty("Name"), (String) e
-				.getProperty("Language"), false));
+				    .getProperty("Name"), (String) e
+				    .getProperty("Language"), false));
 		    }
 		}
 		if (domains != null && !domains.isEmpty()) { // leftover
@@ -191,30 +199,33 @@ public class DomainStoreHandler {
 		}
 	    }
 
+	} catch (Exception e) {
+	    e.printStackTrace();
 	}
+
     }
 
     /**
      * save cache to datastore
      */
-    private static void save() {
-	synchronized (_cache) {
-	    // iterate to find new entries
-	    for (Entry<String, ArrayList<SimpleDomainEntity>> e : _cache
-		    .entrySet()) {
-		if (e.getValue() != null) {
-		    for (SimpleDomainEntity dp : e.getValue()) {
-			if (dp.isNew()) {
-			    saveDomain(e.getKey(), dp.getDomain(),
-				    dp.getLanguage());
-
-			    dp.setNew(false);
-			}
-		    }
-		}
-	    }
-	}
-    }
+    // private static void save() {
+    // synchronized (_cache) {
+    // // iterate to find new entries
+    // for (Entry<String, ArrayList<SimpleDomainEntity>> e : _cache
+    // .entrySet()) {
+    // if (e.getValue() != null) {
+    // for (SimpleDomainEntity dp : e.getValue()) {
+    // if (dp.isNew()) {
+    // saveDomain(e.getKey(), dp.getDomain(),
+    // dp.getLanguage());
+    //
+    // dp.setNew(false);
+    // }
+    // }
+    // }
+    // }
+    // }
+    // }
 
     /**
      * get dot.tk domains for the given webpage
@@ -223,15 +234,18 @@ public class DomainStoreHandler {
      * @return
      */
     public static ArrayList<SimpleDomainEntity> get(String forwardURL) {
-	if (_cache.isEmpty()) {
+	if (_cache == null || _cache.isEmpty()) {
 	    load();
 	}
+
 	synchronized (_cache) {
-	    ArrayList<SimpleDomainEntity> domains = _cache.get(forwardURL);
-
-	    updateAccessCounter();
-
-	    return domains;
+	    Object obj = _cache.get(forwardURL);
+	    ArrayList<SimpleDomainEntity> domains = null;
+	    if (obj != null) {
+		return (ArrayList<SimpleDomainEntity>) obj;
+	    } else {
+		return null;
+	    }
 	}
     }
 
@@ -261,17 +275,24 @@ public class DomainStoreHandler {
      * @param domain
      */
     public static void put(String forwardURL, String domain, String language) {
-	if (_cache.isEmpty()) {
+	if (_cache == null || _cache.isEmpty()) {
 	    load();
 	}
+
 	synchronized (_cache) {
-	    ArrayList<SimpleDomainEntity> domains = _cache.get(forwardURL);
+	    Object obj = _cache.get(forwardURL);
+	    ArrayList<SimpleDomainEntity> domains = null;
+	    if (obj != null) {
+		domains = (ArrayList<SimpleDomainEntity>) obj;
+	    }
+
 	    if (domains == null) { // forwardURL not existing?
 		domains = new ArrayList<SimpleDomainEntity>();
 		domains.add(new SimpleDomainEntity(domain, language, true));
 		_cache.put(forwardURL, domains);
 
 		saveForwardURL(forwardURL);
+		saveDomain(forwardURL, domain, language);
 	    } else { // forwardURL exists
 		SimpleDomainEntity e = new SimpleDomainEntity(domain, language,
 			true);
@@ -280,21 +301,22 @@ public class DomainStoreHandler {
 		    // exists, ignore
 		} else {
 		    domains.add(e);
+
+		    saveDomain(forwardURL, domain, language);
 		}
 	    }
 	}
-	updateAccessCounter();
     }
 
-    private static void updateAccessCounter() {
-	_accessCounter++;
-
-	if (_accessCounter >= UPDATE_THRESHOLD) {
-	    save(); // sync to datastore
-
-	    _accessCounter = 0;
-	}
-    }
+    // private static void updateAccessCounter() {
+    // _accessCounter++;
+    //
+    // if (_accessCounter >= UPDATE_THRESHOLD) {
+    // save(); // sync to datastore
+    //
+    // _accessCounter = 0;
+    // }
+    // }
 
     public static void test() {
 	// create new entities
