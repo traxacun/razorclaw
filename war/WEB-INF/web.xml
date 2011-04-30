@@ -47,6 +47,14 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 	<welcome-file-list>
 		<welcome-file>index.htm</welcome-file>
 	</welcome-file-list>
+	<servlet>
+		<servlet-name>Top1000</servlet-name>
+		<servlet-class>razorclaw.cron.Top1000</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Top1000</servlet-name>
+		<url-pattern>/Top1000Job</url-pattern>
+	</servlet-mapping>
 	<filter>
         <filter-name>appstats</filter-name>
         <filter-class>com.google.appengine.tools.appstats.AppstatsFilter</filter-class>
