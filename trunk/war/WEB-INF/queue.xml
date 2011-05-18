@@ -4,6 +4,7 @@
 		<name>default</name>
 		<rate>5/s</rate>
 	</queue>
+<!--
 	<queue>
 		<name>crawl-queue</name>
 		<rate>5/s</rate>
@@ -20,4 +21,5 @@
 		<name>util-queue</name>
 		<rate>5/s</rate>
 	</queue>
+-->
 </queue-entries>

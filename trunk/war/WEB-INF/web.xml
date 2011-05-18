@@ -12,6 +12,7 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 		<servlet-name>razorclaw</servlet-name>
 		<url-pattern>/razorclaw</url-pattern>
 	</servlet-mapping>
+<!--	
 	<servlet>
 		<servlet-name>CrawlTaskHandler</servlet-name>
 		<servlet-class>razorclaw.servlet.CrawlTaskHandler</servlet-class>
@@ -44,9 +45,11 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 		<servlet-name>InverseDocumentIndex</servlet-name>
 		<url-pattern>/InverseDocumentIndex</url-pattern>
 	</servlet-mapping>
+-->
 	<welcome-file-list>
 		<welcome-file>index.htm</welcome-file>
 	</welcome-file-list>
+<!--
 	<servlet>
 		<servlet-name>Top1000</servlet-name>
 		<servlet-class>razorclaw.cron.Top1000</servlet-class>
@@ -55,7 +58,8 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 		<servlet-name>Top1000</servlet-name>
 		<url-pattern>/Top1000Job</url-pattern>
 	</servlet-mapping>
-	
+-->
+<!--
     <security-constraint>
         <web-resource-collection>
             <url-pattern>/appstats/*</url-pattern>
@@ -64,4 +68,5 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
             <role-name>admin</role-name>
         </auth-constraint>
     </security-constraint>
+-->  
 </web-app>
