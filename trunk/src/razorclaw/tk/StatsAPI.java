@@ -8,6 +8,7 @@ import java.net.URLConnection;
 import java.util.logging.Logger;
 
 import net.arnx.jsonic.JSON;
+import razorclaw.exception.APICrawlException;
 import razorclaw.object.APIMeta;
 
 public class StatsAPI {
@@ -16,7 +17,7 @@ public class StatsAPI {
 	private static final Logger LOG = Logger
 			.getLogger(StatsAPI.class.getName());
 
-	public static APIMeta crawl(String domain) {
+	public static APIMeta crawl(String domain) throws APICrawlException {
 		LOG.info("Crawling metadata from stats.tk API");
 
 		String forwardURL = "";
@@ -49,10 +50,12 @@ public class StatsAPI {
 
 		if (forwardURL == null || forwardURL.isEmpty()) {
 			LOG.severe("Crawling metadata from stats.tk API failed");
-			return null;
+
+			throw new APICrawlException();
 		} else {
 			LOG.info("ForwardURL parsed: " + domain + ", " + forwardURL);
 			return apiMeta;
 		}
 	}
+
 }

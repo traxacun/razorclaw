@@ -52,7 +52,8 @@ public class WebpageMeta implements Serializable {
 	}
 
 	/**
-	 * fill attributes from input HTML node.
+	 * gather words from special webpage meta, including title, keywords,
+	 * description, h1, h2
 	 * 
 	 * @param doc
 	 *            the input HTML DOM node
