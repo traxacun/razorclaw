@@ -149,5 +149,4 @@ public class BM25F {
 			System.out.println(e.getKey() + ": " + score);
 		}
 	}
-
 }

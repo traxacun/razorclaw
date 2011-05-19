@@ -1,0 +1,133 @@
+package razorclaw.crawler;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.Collections;
+import java.util.logging.Logger;
+
+import net.sf.jsr107cache.Cache;
+import net.sf.jsr107cache.CacheException;
+import net.sf.jsr107cache.CacheFactory;
+import net.sf.jsr107cache.CacheManager;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import razorclaw.object.Webpage;
+
+public class HTMLCrawler {
+	private static final Logger LOG = Logger.getLogger(HTMLCrawler.class
+			.getName());
+
+	public static Webpage crawl(Webpage web) throws CacheException,
+			URISyntaxException, IOException {
+		String targetURL = web.getAPIMeta().getForwardURL();
+		LOG.info("Crawling webpage: " + targetURL);
+
+		if (checkCache(targetURL)) {
+			return loadCache(targetURL);
+		}
+
+		// reform to deal with special characters
+		URL url = new URL(targetURL);
+		URI uri = new URI(url.getProtocol(), url.getHost(), url.getPath(),
+				url.getQuery(), null);
+
+		URLConnection conn = (new URL(uri.toString())).openConnection();
+		conn.setConnectTimeout(0); // 10 sec in GAE
+		conn.setReadTimeout(0);
+		conn.setRequestProperty("UserAgent", "Chrome 11");
+
+		byte[] byteChunk = new byte[4096];
+		ByteArrayOutputStream webpageContent = new ByteArrayOutputStream();
+
+		InputStream in = conn.getInputStream();
+		while (in.read(byteChunk) > 0) {
+			webpageContent.write(byteChunk);
+		}
+
+		// try default charset first(UTF-8)
+		Document doc = Jsoup.parse(webpageContent.toString());
+
+		// detect charset
+		Elements meta = doc.getElementsByTag("meta");
+		String charset = "";
+		for (Element e : meta) {
+			if (e.hasAttr("http-equiv") && e.hasAttr("content")
+					&& e.attr("http-equiv").equals("Content-Type")) {
+				String s = e.attr("content");
+				charset = s.substring(s.indexOf("charset=") + 8);
+				break;
+			}
+		}
+		if (!charset.isEmpty() && !charset.equalsIgnoreCase("UTF-8")) {
+			String content = new String(webpageContent.toString(charset));
+			// parse using given charset
+			doc = Jsoup.parse(content);
+		}
+		web.setHtml(doc.html());
+		web.setText(doc.text());
+		web.getWebpageMeta().setCharset(charset);
+
+		saveCache(targetURL, web);
+
+		return web;
+	}
+
+	/**
+	 * save the crawl result to memcache for parse, key=_forwardURL,
+	 * value=_webpage
+	 * 
+	 * @throws CacheException
+	 */
+	private static void saveCache(String targetURL, Webpage web)
+			throws CacheException {
+		LOG.info("Saving webpage to cache");
+
+		Cache crawlCache = CacheManager.getInstance().getCache("crawl_cache");
+		if (crawlCache == null) {
+			CacheFactory cacheFactory = CacheManager.getInstance()
+					.getCacheFactory();
+			crawlCache = cacheFactory.createCache(Collections.emptyMap());
+		}
+
+		crawlCache.put("__crawl__" + web.getAPIMeta().getForwardURL(), web);
+	}
+
+	/**
+	 * load a webpage from memcache if it's already crawled
+	 * 
+	 * @throws CacheException
+	 */
+	private static Webpage loadCache(String targetURL) throws CacheException {
+		LOG.info("Loading webpage from cache");
+
+		// cannot be null
+		Cache crawlCache = CacheManager.getInstance().getCache("crawl_cache");
+
+		return (Webpage) crawlCache.get("__crawl__" + targetURL);
+	}
+
+	/**
+	 * some users setup multiple dot.tk domains referring to the same URL. check
+	 * if the destination webpage exists in the cache, using forwardURL as the
+	 * key
+	 */
+	private static boolean checkCache(String targetURL) {
+		LOG.info("Check crawling cache");
+
+		Cache crawlCache = CacheManager.getInstance().getCache("crawl_cache");
+		if (crawlCache == null) {
+			return false;
+		} else {
+			return crawlCache.containsKey(targetURL);
+		}
+	}
+}
