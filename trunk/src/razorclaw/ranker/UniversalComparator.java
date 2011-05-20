@@ -17,11 +17,11 @@ public class UniversalComparator implements
 				- arg1.getValue().getBM25FScore() < 0) {
 			return 1;
 		} else {
-			// then TF
-			if (arg0.getValue().getOccurance() > arg1.getValue().getOccurance()) {
+			// then TF in Content
+			if (arg0.getValue().getTFContent() > arg1.getValue().getTFContent()) {
 				return -1;
-			} else if (arg0.getValue().getOccurance() < arg1.getValue()
-					.getOccurance()) {
+			} else if (arg0.getValue().getTFContent() < arg1.getValue()
+					.getTFContent()) {
 				return 1;
 			} else {
 				return 0;
