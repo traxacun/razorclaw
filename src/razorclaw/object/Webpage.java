@@ -88,11 +88,12 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 					}
 					// combine
 					if (getPhraseMap().containsKey(p)) {
-						getPhraseMap().get(p).increaseOccurance();
+						getPhraseMap().get(p).increaseTFContent();
 					} else {
 						property = new PhraseProperty();
-						property.setNew(true).setForwardURL(
-								getAPIMeta().getForwardURL());
+						property.setNew(true)
+								.setForwardURL(getAPIMeta().getForwardURL())
+								.increaseTFContent();
 						getPhraseMap().put(p, property);
 					}
 				}
@@ -110,11 +111,12 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 				if (p != null && !p.isEmpty() && p.length() > 2) {
 					// combine
 					if (getPhraseMap().containsKey(p)) {
-						getPhraseMap().get(p).increaseOccurance();
+						getPhraseMap().get(p).increaseTFContent();
 					} else {
 						property = new PhraseProperty();
-						property.setNew(true).setForwardURL(
-								getAPIMeta().getForwardURL());
+						property.setNew(true)
+								.setForwardURL(getAPIMeta().getForwardURL())
+								.increaseTFContent();
 
 						getPhraseMap().put(p, property);
 					}
@@ -127,11 +129,12 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 				if (p != null && !p.isEmpty() && p.length() > 2) {
 					// combine
 					if (getPhraseMap().containsKey(p)) {
-						getPhraseMap().get(p).increaseOccurance();
+						getPhraseMap().get(p).increaseTFContent();
 					} else {
 						property = new PhraseProperty();
-						property.setNew(true).setForwardURL(
-								getAPIMeta().getForwardURL());
+						property.setNew(true)
+								.setForwardURL(getAPIMeta().getForwardURL())
+								.increaseTFContent();
 
 						getPhraseMap().put(p, property);
 					}
@@ -160,11 +163,10 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 
 				} else {
 					if (getPhraseMap().containsKey(s)) {
-						getPhraseMap().get(s).setTitle(true)
-								.increaseOccurance();
+						getPhraseMap().get(s).increaseTFTitle();
 					} else { // not exists
 						property = new PhraseProperty();
-						property.setTitle(true).setNew(true)
+						property.increaseTFTitle().setNew(true)
 								.setForwardURL(getAPIMeta().getForwardURL());
 
 						getPhraseMap().put(s, property);
@@ -184,11 +186,10 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 
 				} else {
 					if (getPhraseMap().containsKey(s)) {
-						getPhraseMap().get(s).setMetaKeywords(true)
-								.increaseOccurance();
+						getPhraseMap().get(s).increaseTFMetaKeywords();
 					} else { // not exists
 						property = new PhraseProperty();
-						property.setMetaKeywords(true).setNew(true)
+						property.increaseTFMetaKeywords().setNew(true)
 								.setForwardURL(getAPIMeta().getForwardURL());
 
 						getPhraseMap().put(s, property);
@@ -208,11 +209,10 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 
 				} else {
 					if (getPhraseMap().containsKey(s)) {
-						getPhraseMap().get(s).setMetaDescription(true)
-								.increaseOccurance();
+						getPhraseMap().get(s).increaseTFMetaDescription();
 					} else { // not exists
 						property = new PhraseProperty();
-						property.setMetaDescription(true).setNew(true)
+						property.increaseTFMetaDescription().setNew(true)
 								.setForwardURL(getAPIMeta().getForwardURL());
 
 						getPhraseMap().put(s, property);
@@ -233,11 +233,10 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 
 				} else {
 					if (getPhraseMap().containsKey(s)) {
-						getPhraseMap().get(s).setAnchorText(true)
-								.increaseOccurance();
+						getPhraseMap().get(s).increaseTFAnchor();
 					} else { // not exists
 						property = new PhraseProperty();
-						property.setAnchorText(true).setNew(true)
+						property.increaseTFAnchor().setNew(true)
 								.setForwardURL(getAPIMeta().getForwardURL());
 
 						getPhraseMap().put(s, property);
@@ -257,8 +256,7 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 
 				} else {
 					if (getPhraseMap().containsKey(s)) {
-						getPhraseMap().get(s).setSpiderKeywords(true)
-								.increaseOccurance();
+						getPhraseMap().get(s).setSpiderKeywords(true);
 					} else { // not exists
 						property = new PhraseProperty();
 						property.setSpiderKeywords(true).setNew(true)
@@ -281,8 +279,7 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 
 				} else {
 					if (getPhraseMap().containsKey(s)) {
-						getPhraseMap().get(s).setAdminKeywords(true)
-								.increaseOccurance();
+						getPhraseMap().get(s).setAdminKeywords(true);
 					} else { // not exists
 						property = new PhraseProperty();
 						property.setAdminKeywords(true).setNew(true)
@@ -305,8 +302,7 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 
 				} else {
 					if (getPhraseMap().containsKey(s)) {
-						getPhraseMap().get(s).setUserKeywords(true)
-								.increaseOccurance();
+						getPhraseMap().get(s).setUserKeywords(true);
 					} else { // not exists
 						property = new PhraseProperty();
 						property.setUserKeywords(true).setNew(true)
@@ -326,7 +322,7 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 							PartOfSpeech.load(OpenNLPPOSTagger.getWordTag(e
 									.getKey())))
 					.setTFScore(
-							(double) e.getValue().getOccurance()
+							(double) e.getValue().getTFContent()
 									/ getPhraseMap().size());
 		}
 		// @formatter:on

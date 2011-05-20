@@ -18,14 +18,10 @@ public class PhraseProperty implements Serializable {
 
 	private String _forwardURL;
 
-	private int _occurance;
-
 	private double _tfScore, _idfScore, _tfidfScore, _bm25fScore,
 			_languageModelScore;
 
-	private boolean _isTitle, _isH1, _isH2, _isMetaKeywords,
-			_isMetaDescription, _isCapital, _isAnchorText, _isSpiderKeywords,
-			_isAdminKeywords, _isUserKeywords;
+	private boolean _isSpiderKeywords, _isAdminKeywords, _isUserKeywords;
 
 	private int _TFContent, _TFTitle, _TFH1, _TFH2, _TFMetaKeywords,
 			_TFMetaDescription, _TFCaptital, _TFAnchor;
@@ -39,11 +35,11 @@ public class PhraseProperty implements Serializable {
 	public PhraseProperty() {
 		_forwardURL = "";
 
-		_occurance = 1;
+		_TFContent = _TFTitle = _TFH1 = _TFH2 = _TFMetaDescription = _TFMetaKeywords = _TFCaptital = _TFAnchor = 0;
 
 		_tfScore = _idfScore = _tfidfScore = _bm25fScore = _languageModelScore = 0.0;
 
-		_isTitle = _isH1 = _isH2 = _isMetaKeywords = _isMetaDescription = _isCapital = _isAnchorText = _isAdminKeywords = _isUserKeywords = _isSpiderKeywords = false;
+		_isAdminKeywords = _isUserKeywords = _isSpiderKeywords = false;
 
 		_isNew = true;
 
@@ -52,8 +48,8 @@ public class PhraseProperty implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Occurance: " + _occurance + " BM25F: " + _bm25fScore
-				+ " isAnchor: " + _isAnchorText + "\n";
+		return "TF in content: " + getTFContent() + " BM25F: "
+				+ getBM25FScore() + "\n";
 	}
 
 	/**
@@ -76,15 +72,6 @@ public class PhraseProperty implements Serializable {
 
 	public String getForwardURL() {
 		return _forwardURL;
-	}
-
-	public PhraseProperty setOccurance(int _occurance) {
-		this._occurance = _occurance;
-		return this;
-	}
-
-	public int getOccurance() {
-		return _occurance;
 	}
 
 	public PhraseProperty setTFScore(double _tfScore) {
@@ -132,60 +119,6 @@ public class PhraseProperty implements Serializable {
 		return _languageModelScore;
 	}
 
-	public PhraseProperty setMetaDescription(boolean _isMetaDescription) {
-		this._isMetaDescription = _isMetaDescription;
-		return this;
-	}
-
-	public boolean isMetaDescription() {
-		return _isMetaDescription;
-	}
-
-	public PhraseProperty setMetaKeywords(boolean _isMetaKeywords) {
-		this._isMetaKeywords = _isMetaKeywords;
-		return this;
-	}
-
-	public boolean isMetaKeywords() {
-		return _isMetaKeywords;
-	}
-
-	public PhraseProperty setH2(boolean _isH2) {
-		this._isH2 = _isH2;
-		return this;
-	}
-
-	public boolean isH2() {
-		return _isH2;
-	}
-
-	public PhraseProperty setH1(boolean _isH1) {
-		this._isH1 = _isH1;
-		return this;
-	}
-
-	public boolean isH1() {
-		return _isH1;
-	}
-
-	public PhraseProperty setTitle(boolean _isTitle) {
-		this._isTitle = _isTitle;
-		return this;
-	}
-
-	public boolean isTitle() {
-		return _isTitle;
-	}
-
-	public PhraseProperty setCapital(boolean _isCapital) {
-		this._isCapital = _isCapital;
-		return this;
-	}
-
-	public boolean isCapital() {
-		return _isCapital;
-	}
-
 	public PhraseProperty setPartOfSpeech(PartOfSpeech _partOfSpeech) {
 		this._partOfSpeech = _partOfSpeech;
 		return this;
@@ -202,11 +135,6 @@ public class PhraseProperty implements Serializable {
 
 	public boolean isNew() {
 		return _isNew;
-	}
-
-	public PhraseProperty increaseOccurance() {
-		_occurance++;
-		return this;
 	}
 
 	public PhraseProperty setAdminKeywords(boolean _isAdminKeywords) {
@@ -227,15 +155,6 @@ public class PhraseProperty implements Serializable {
 		return _isSpiderKeywords;
 	}
 
-	public PhraseProperty setAnchorText(boolean _isAnchorText) {
-		this._isAnchorText = _isAnchorText;
-		return this;
-	}
-
-	public boolean isAnchorText() {
-		return _isAnchorText;
-	}
-
 	public PhraseProperty setUserKeywords(boolean _isUserKeywords) {
 		this._isUserKeywords = _isUserKeywords;
 		return this;
@@ -243,6 +162,78 @@ public class PhraseProperty implements Serializable {
 
 	public boolean isUserKeywords() {
 		return _isUserKeywords;
+	}
+
+	public PhraseProperty increaseTFContent() {
+		this._TFContent++;
+		return this;
+	}
+
+	public int getTFContent() {
+		return _TFContent;
+	}
+
+	public PhraseProperty increaseTFTitle() {
+		this._TFTitle++;
+		return this;
+	}
+
+	public int getTFTitle() {
+		return _TFTitle;
+	}
+
+	public PhraseProperty increaseTFH1() {
+		this._TFH1++;
+		return this;
+	}
+
+	public int getTFH1() {
+		return _TFH1;
+	}
+
+	public PhraseProperty increaseTFH2() {
+		this._TFH2++;
+		return this;
+	}
+
+	public int getTFH2() {
+		return _TFH2;
+	}
+
+	public PhraseProperty increaseTFMetaKeywords() {
+		this._TFMetaKeywords++;
+		return this;
+	}
+
+	public int getTFMetaKeywords() {
+		return _TFMetaKeywords;
+	}
+
+	public PhraseProperty increaseTFMetaDescription() {
+		this._TFMetaDescription++;
+		return this;
+	}
+
+	public int getTFMetaDescription() {
+		return _TFMetaDescription;
+	}
+
+	public PhraseProperty increaseTFAnchor() {
+		this._TFAnchor++;
+		return this;
+	}
+
+	public int getTFAnchor() {
+		return _TFAnchor;
+	}
+
+	public PhraseProperty increaseTFCaptital() {
+		this._TFCaptital++;
+		return this;
+	}
+
+	public int getTFCaptital() {
+		return _TFCaptital;
 	}
 
 }

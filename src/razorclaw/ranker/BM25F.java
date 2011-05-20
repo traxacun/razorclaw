@@ -50,62 +50,47 @@ public class BM25F {
 		for (Entry<String, PhraseProperty> e : phrases.entrySet()) {
 			// weight on different features
 			// ---------------length----------------
-			double lengthWeight = 0.0;
-			lengthWeight = _lengthW
+			double lengthWeight = _lengthW
 					/ ((1 - _lengthB) + _lengthB * _avgLength
 							/ e.getKey().length());
 			// --------------title-------------------
-			double titleWeight = 0.0;
-			if (e.getValue().isTitle()) {
-				titleWeight = _titleW
-						/ ((1 - _titleB) + _titleB
-								* webpageMeta.getTitle().size()
-								/ _avgTitleLength);
-			}
+			double titleWeight = e.getValue().getTFTitle()
+					* _titleW
+					/ ((1 - _titleB) + _titleB * webpageMeta.getTitle().size()
+							/ _avgTitleLength);
 			// ---------------meta keywords---------------
-			double metaKeywordsWeight = 0.0;
-			if (e.getValue().isMetaKeywords()) {
-				metaKeywordsWeight = _metaKeywordsW
-						/ ((1 - _metaKeywordsB) + _metaKeywordsB
-								* webpageMeta.getKeywords().size()
-								/ _avgMetaKeywordsLength);
-			}
+			double metaKeywordsWeight = e.getValue().getTFMetaKeywords()
+					* _metaKeywordsW
+					/ ((1 - _metaKeywordsB) + _metaKeywordsB
+							* webpageMeta.getKeywords().size()
+							/ _avgMetaKeywordsLength);
 			// --------------meta description-----------------
-			double metaDescriptionWeight = 0.0;
-			if (e.getValue().isMetaDescription()) {
-				metaDescriptionWeight = _metaDescriptionW
-						/ ((1 - _metaDescriptionB) + _metaDescriptionB
-								* webpageMeta.getDescription().size()
-								/ _avgMetaDescriptionLength);
-			}
+			double metaDescriptionWeight = e.getValue().getTFMetaDescription()
+					* _metaDescriptionW
+					/ ((1 - _metaDescriptionB) + _metaDescriptionB
+							* webpageMeta.getDescription().size()
+							/ _avgMetaDescriptionLength);
 			// ----------------------h1---------------------
-			double h1Weight = 0.0;
-			if (e.getValue().isH1()) {
-				h1Weight = _h1W
-						/ ((1 - _h1B) + _h1B * webpageMeta.getH1().size()
-								/ _avgH1Length);
-			}
+			double h1Weight = e.getValue().getTFH1()
+					* _h1W
+					/ ((1 - _h1B) + _h1B * webpageMeta.getH1().size()
+							/ _avgH1Length);
 			// ----------------------h2------------------
-			double h2Weight = 0.0;
-			if (e.getValue().isH2()) {
-				h2Weight = _h2W
-						/ ((1 - _h2B) + _h2B * webpageMeta.getH2().size()
-								/ _avgH2Length);
-			}
+			double h2Weight = e.getValue().getTFH2()
+					* _h2W
+					/ ((1 - _h2B) + _h2B * webpageMeta.getH2().size()
+							/ _avgH2Length);
 			// --------------------content-------------------
-			double contentWeight = 0.0;
-			contentWeight = _contentW
-					* e.getValue().getOccurance()
+			double contentWeight = e.getValue().getTFContent()
+					* _contentW
 					/ ((1 - _contentB) + _contentB * phrases.size()
 							/ _avgContentLength);
 			// ------------anchor text----------------
-			double anchorTextWeight = 0.0;
-			if (e.getValue().isAnchorText()) {
-				anchorTextWeight = _anchorW
-						/ ((1 - _anchorB) + _anchorB
-								* apiMeta.getRefererAnchorTexts().size()
-								/ _avgAnchorLength);
-			}
+			double anchorTextWeight = e.getValue().getTFAnchor()
+					* _anchorW
+					/ ((1 - _anchorB) + _anchorB
+							* apiMeta.getRefererAnchorTexts().size()
+							/ _avgAnchorLength);
 			// -----------spider keywords-------------
 			double spiderKeywordsWeight = 0.0;
 			if (e.getValue().isSpiderKeywords()) {
@@ -141,13 +126,14 @@ public class BM25F {
 					- documentCount + 0.1)
 					/ (documentCount + 0.1));
 
-			// final score
+			// pseudo score
 			double weightScore = titleWeight + metaKeywordsWeight
 					+ metaDescriptionWeight + h1Weight + h2Weight
 					+ contentWeight + anchorTextWeight + spiderKeywordsWeight
 					+ adminKeywordsWeight + userKeywordsWeight + lengthWeight;
 
-			double score = weightScore / (_paraK + weightScore);
+			// saturation
+			double score = idfScore * weightScore / (_paraK + weightScore);
 
 			// record the score
 			e.getValue().setBM25FScore(score);
