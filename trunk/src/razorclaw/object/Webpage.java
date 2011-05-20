@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
+import org.mozilla.intl.chardet.nsICharsetDetectionObserver;
+
 import razorclaw.object.APIMeta.RefererAnchorText;
 import razorclaw.object.Dictionaries.PartOfSpeech;
 import razorclaw.parser.BasicTokenizer;
@@ -24,7 +26,7 @@ import razorclaw.util.TextUtils;
  * @author Shuai YUAN
  * 
  */
-public class Webpage implements Serializable {
+public class Webpage implements Serializable, nsICharsetDetectionObserver {
 	/**
      * 
      */
@@ -328,6 +330,14 @@ public class Webpage implements Serializable {
 									/ getPhraseMap().size());
 		}
 		// @formatter:on
+	}
+
+	/**
+	 * invoked when charset is detected
+	 */
+	@Override
+	public void Notify(String result) {
+		getWebpageMeta().setCharset(result);
 	}
 
 	// -----------------------getters and setters---------------------

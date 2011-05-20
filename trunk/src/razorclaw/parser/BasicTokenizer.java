@@ -9,6 +9,6 @@ public class BasicTokenizer {
 			.getName());
 
 	public static String[] tokenize(String text, String lang) {
-		return text.split(TextUtils.replacePattern);
+		return text.split(TextUtils.replacePattern + "| |/");
 	}
 }
