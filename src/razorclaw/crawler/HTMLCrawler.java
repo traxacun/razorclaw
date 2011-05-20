@@ -19,12 +19,16 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.mozilla.intl.chardet.nsDetector;
+import org.mozilla.intl.chardet.nsICharsetDetectionObserver;
 
 import razorclaw.object.Webpage;
 
 public class HTMLCrawler {
 	private static final Logger LOG = Logger.getLogger(HTMLCrawler.class
 			.getName());
+
+	private static String _charset;
 
 	public static Webpage crawl(Webpage web) throws CacheException,
 			URISyntaxException, IOException {
@@ -58,23 +62,37 @@ public class HTMLCrawler {
 
 		// detect charset
 		Elements meta = doc.getElementsByTag("meta");
-		String charset = "";
+		_charset = "";
 		for (Element e : meta) {
 			if (e.hasAttr("http-equiv") && e.hasAttr("content")
-					&& e.attr("http-equiv").equals("Content-Type")) {
+					&& e.attr("http-equiv").equalsIgnoreCase("Content-Type")) {
 				String s = e.attr("content");
-				charset = s.substring(s.indexOf("charset=") + 8);
+				_charset = s.substring(s.indexOf("charset=") + 8);
+
+				web.getWebpageMeta().setCharset(_charset);
 				break;
 			}
+
 		}
-		if (!charset.isEmpty() && !charset.equalsIgnoreCase("UTF-8")) {
-			String content = new String(webpageContent.toString(charset));
+		if (_charset.isEmpty()) {
+			LOG.warning("Un-identified charset from HTML");
+
+			nsDetector det = new nsDetector(nsDetector.ALL);
+			det.Init(web);
+			det.DoIt(webpageContent.toByteArray(), webpageContent.size(), false);
+			det.DataEnd();
+
+			_charset = web.getWebpageMeta().getCharset();
+
+			LOG.warning("Trying with charset: " + _charset);
+		}
+		if (!_charset.equalsIgnoreCase("UTF-8")) {
+			String content = new String(webpageContent.toString(_charset));
 			// parse using given charset
 			doc = Jsoup.parse(content);
 		}
 		web.setHtml(doc.html());
 		web.setText(doc.text());
-		web.getWebpageMeta().setCharset(charset);
 
 		saveCache(targetURL, web);
 

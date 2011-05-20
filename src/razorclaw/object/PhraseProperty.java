@@ -11,236 +11,238 @@ import razorclaw.object.Dictionaries.PartOfSpeech;
  * 
  */
 public class PhraseProperty implements Serializable {
-    /**
-     * serialVersionUID
-     */
-    private static final long serialVersionUID = -7543270972725805035L;
+	/**
+	 * serialVersionUID
+	 */
+	private static final long serialVersionUID = -7543270972725805035L;
 
-    private String _forwardURL;
+	private String _forwardURL;
 
-    private int _occurance;
+	private int _occurance;
 
-    private double _tfScore, _idfScore, _tfidfScore, _bm25fScore,
-	    _languageModelScore;
+	private double _tfScore, _idfScore, _tfidfScore, _bm25fScore,
+			_languageModelScore;
 
-    private boolean _isTitle, _isH1, _isH2, _isMetaKeywords,
-	    _isMetaDescription, _isCapital, _isAnchorText, _isSpiderKeywords,
-	    _isAdminKeywords, _isUserKeywords;
+	private boolean _isTitle, _isH1, _isH2, _isMetaKeywords,
+			_isMetaDescription, _isCapital, _isAnchorText, _isSpiderKeywords,
+			_isAdminKeywords, _isUserKeywords;
 
-    private PartOfSpeech _partOfSpeech;
-    /**
-     * flag for sync
-     */
-    private boolean _isNew;
+	private int _TFContent, _TFTitle, _TFH1, _TFH2, _TFMetaKeywords,
+			_TFMetaDescription, _TFCaptital, _TFAnchor;
 
-    public PhraseProperty() {
-	_forwardURL = "";
+	private PartOfSpeech _partOfSpeech;
+	/**
+	 * flag for sync
+	 */
+	private boolean _isNew;
 
-	_occurance = 1;
+	public PhraseProperty() {
+		_forwardURL = "";
 
-	_tfScore = _idfScore = _tfidfScore = _bm25fScore = _languageModelScore = 0.0;
+		_occurance = 1;
 
-	_isTitle = _isH1 = _isH2 = _isMetaKeywords = _isMetaDescription = _isCapital
-		= _isAnchorText = _isAdminKeywords = _isUserKeywords = _isSpiderKeywords = false;
+		_tfScore = _idfScore = _tfidfScore = _bm25fScore = _languageModelScore = 0.0;
 
-	_isNew = true;
+		_isTitle = _isH1 = _isH2 = _isMetaKeywords = _isMetaDescription = _isCapital = _isAnchorText = _isAdminKeywords = _isUserKeywords = _isSpiderKeywords = false;
 
-	_partOfSpeech = PartOfSpeech.UNSPECIFIED;
-    }
+		_isNew = true;
 
-    @Override
-    public String toString() {
-	return "Occurance: " + _occurance + " BM25F: " + _bm25fScore
-		+ " isAnchor: " + _isAnchorText + "\n";
-    }
-
-    /**
-     * override to serve PhraseStoreHandler
-     */
-    @Override
-    public boolean equals(Object obj) {
-	if (obj == null || _forwardURL == null) {
-	    return false;
-	} else {
-	    return _forwardURL.equals(((PhraseProperty) obj).getForwardURL());
+		_partOfSpeech = PartOfSpeech.UNSPECIFIED;
 	}
-    }
 
-    // ------------------getter and setter-----------------------
-    public PhraseProperty setForwardURL(String _forwardURL) {
-	this._forwardURL = _forwardURL;
-	return this;
-    }
+	@Override
+	public String toString() {
+		return "Occurance: " + _occurance + " BM25F: " + _bm25fScore
+				+ " isAnchor: " + _isAnchorText + "\n";
+	}
 
-    public String getForwardURL() {
-	return _forwardURL;
-    }
+	/**
+	 * override to serve PhraseStoreHandler
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || _forwardURL == null) {
+			return false;
+		} else {
+			return _forwardURL.equals(((PhraseProperty) obj).getForwardURL());
+		}
+	}
 
-    public PhraseProperty setOccurance(int _occurance) {
-	this._occurance = _occurance;
-	return this;
-    }
+	// ------------------getter and setter-----------------------
+	public PhraseProperty setForwardURL(String _forwardURL) {
+		this._forwardURL = _forwardURL;
+		return this;
+	}
 
-    public int getOccurance() {
-	return _occurance;
-    }
+	public String getForwardURL() {
+		return _forwardURL;
+	}
 
-    public PhraseProperty setTFScore(double _tfScore) {
-	this._tfScore = _tfScore;
-	return this;
-    }
+	public PhraseProperty setOccurance(int _occurance) {
+		this._occurance = _occurance;
+		return this;
+	}
 
-    public double getTFScore() {
-	return _tfScore;
-    }
+	public int getOccurance() {
+		return _occurance;
+	}
 
-    public PhraseProperty setIDFScore(double _idfScore) {
-	this._idfScore = _idfScore;
-	return this;
-    }
+	public PhraseProperty setTFScore(double _tfScore) {
+		this._tfScore = _tfScore;
+		return this;
+	}
 
-    public double getIDFScore() {
-	return _idfScore;
-    }
+	public double getTFScore() {
+		return _tfScore;
+	}
 
-    public PhraseProperty setTFIDFScore(double _tfidfScore) {
-	this._tfidfScore = _tfidfScore;
-	return this;
-    }
+	public PhraseProperty setIDFScore(double _idfScore) {
+		this._idfScore = _idfScore;
+		return this;
+	}
 
-    public double getTFIDFScore() {
-	return _tfidfScore;
-    }
+	public double getIDFScore() {
+		return _idfScore;
+	}
 
-    public PhraseProperty setBM25FScore(double _bm25fScore) {
-	this._bm25fScore = _bm25fScore;
-	return this;
-    }
+	public PhraseProperty setTFIDFScore(double _tfidfScore) {
+		this._tfidfScore = _tfidfScore;
+		return this;
+	}
 
-    public double getBM25FScore() {
-	return _bm25fScore;
-    }
+	public double getTFIDFScore() {
+		return _tfidfScore;
+	}
 
-    public PhraseProperty setLanguageModelScore(double _languageModelScore) {
-	this._languageModelScore = _languageModelScore;
-	return this;
-    }
+	public PhraseProperty setBM25FScore(double _bm25fScore) {
+		this._bm25fScore = _bm25fScore;
+		return this;
+	}
 
-    public double getLanguageModelScore() {
-	return _languageModelScore;
-    }
+	public double getBM25FScore() {
+		return _bm25fScore;
+	}
 
-    public PhraseProperty setMetaDescription(boolean _isMetaDescription) {
-	this._isMetaDescription = _isMetaDescription;
-	return this;
-    }
+	public PhraseProperty setLanguageModelScore(double _languageModelScore) {
+		this._languageModelScore = _languageModelScore;
+		return this;
+	}
 
-    public boolean isMetaDescription() {
-	return _isMetaDescription;
-    }
+	public double getLanguageModelScore() {
+		return _languageModelScore;
+	}
 
-    public PhraseProperty setMetaKeywords(boolean _isMetaKeywords) {
-	this._isMetaKeywords = _isMetaKeywords;
-	return this;
-    }
+	public PhraseProperty setMetaDescription(boolean _isMetaDescription) {
+		this._isMetaDescription = _isMetaDescription;
+		return this;
+	}
 
-    public boolean isMetaKeywords() {
-	return _isMetaKeywords;
-    }
+	public boolean isMetaDescription() {
+		return _isMetaDescription;
+	}
 
-    public PhraseProperty setH2(boolean _isH2) {
-	this._isH2 = _isH2;
-	return this;
-    }
+	public PhraseProperty setMetaKeywords(boolean _isMetaKeywords) {
+		this._isMetaKeywords = _isMetaKeywords;
+		return this;
+	}
 
-    public boolean isH2() {
-	return _isH2;
-    }
+	public boolean isMetaKeywords() {
+		return _isMetaKeywords;
+	}
 
-    public PhraseProperty setH1(boolean _isH1) {
-	this._isH1 = _isH1;
-	return this;
-    }
+	public PhraseProperty setH2(boolean _isH2) {
+		this._isH2 = _isH2;
+		return this;
+	}
 
-    public boolean isH1() {
-	return _isH1;
-    }
+	public boolean isH2() {
+		return _isH2;
+	}
 
-    public PhraseProperty setTitle(boolean _isTitle) {
-	this._isTitle = _isTitle;
-	return this;
-    }
+	public PhraseProperty setH1(boolean _isH1) {
+		this._isH1 = _isH1;
+		return this;
+	}
 
-    public boolean isTitle() {
-	return _isTitle;
-    }
+	public boolean isH1() {
+		return _isH1;
+	}
 
-    public PhraseProperty setCapital(boolean _isCapital) {
-	this._isCapital = _isCapital;
-	return this;
-    }
+	public PhraseProperty setTitle(boolean _isTitle) {
+		this._isTitle = _isTitle;
+		return this;
+	}
 
-    public boolean isCapital() {
-	return _isCapital;
-    }
+	public boolean isTitle() {
+		return _isTitle;
+	}
 
-    public PhraseProperty setPartOfSpeech(PartOfSpeech _partOfSpeech) {
-	this._partOfSpeech = _partOfSpeech;
-	return this;
-    }
+	public PhraseProperty setCapital(boolean _isCapital) {
+		this._isCapital = _isCapital;
+		return this;
+	}
 
-    public PartOfSpeech getPartOfSpeech() {
-	return _partOfSpeech;
-    }
+	public boolean isCapital() {
+		return _isCapital;
+	}
 
-    public PhraseProperty setNew(boolean _isNew) {
-	this._isNew = _isNew;
-	return this;
-    }
+	public PhraseProperty setPartOfSpeech(PartOfSpeech _partOfSpeech) {
+		this._partOfSpeech = _partOfSpeech;
+		return this;
+	}
 
-    public boolean isNew() {
-	return _isNew;
-    }
+	public PartOfSpeech getPartOfSpeech() {
+		return _partOfSpeech;
+	}
 
-    public PhraseProperty increaseOccurance() {
-	_occurance++;
-	return this;
-    }
+	public PhraseProperty setNew(boolean _isNew) {
+		this._isNew = _isNew;
+		return this;
+	}
 
-    public PhraseProperty setAdminKeywords(boolean _isAdminKeywords) {
-	this._isAdminKeywords = _isAdminKeywords;
-	return this;
-    }
+	public boolean isNew() {
+		return _isNew;
+	}
 
-    public boolean isAdminKeywords() {
-	return _isAdminKeywords;
-    }
+	public PhraseProperty increaseOccurance() {
+		_occurance++;
+		return this;
+	}
 
-    public PhraseProperty setSpiderKeywords(boolean _isSpiderKeywords) {
-	this._isSpiderKeywords = _isSpiderKeywords;
-	return this;
-    }
+	public PhraseProperty setAdminKeywords(boolean _isAdminKeywords) {
+		this._isAdminKeywords = _isAdminKeywords;
+		return this;
+	}
 
-    public boolean isSpiderKeywords() {
-	return _isSpiderKeywords;
-    }
+	public boolean isAdminKeywords() {
+		return _isAdminKeywords;
+	}
 
-    public PhraseProperty setAnchorText(boolean _isAnchorText) {
-	this._isAnchorText = _isAnchorText;
-	return this;
-    }
+	public PhraseProperty setSpiderKeywords(boolean _isSpiderKeywords) {
+		this._isSpiderKeywords = _isSpiderKeywords;
+		return this;
+	}
 
-    public boolean isAnchorText() {
-	return _isAnchorText;
-    }
+	public boolean isSpiderKeywords() {
+		return _isSpiderKeywords;
+	}
 
-    public PhraseProperty setUserKeywords(boolean _isUserKeywords) {
-	this._isUserKeywords = _isUserKeywords;
-	return this;
-    }
+	public PhraseProperty setAnchorText(boolean _isAnchorText) {
+		this._isAnchorText = _isAnchorText;
+		return this;
+	}
 
-    public boolean isUserKeywords() {
-	return _isUserKeywords;
-    }
+	public boolean isAnchorText() {
+		return _isAnchorText;
+	}
+
+	public PhraseProperty setUserKeywords(boolean _isUserKeywords) {
+		this._isUserKeywords = _isUserKeywords;
+		return this;
+	}
+
+	public boolean isUserKeywords() {
+		return _isUserKeywords;
+	}
 
 }

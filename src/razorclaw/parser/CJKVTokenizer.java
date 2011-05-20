@@ -12,7 +12,7 @@ import org.wltea.analyzer.Lexeme;
 public class CJKVTokenizer {
 	private static final String SIMPLIFIED_DICT = "IKAnalyzer/cedict_simplified.u8";
 	private static final String TRADITIONAL_DICT = "IKAnalyzer/cedict_traditional.u8";
-	private static final String KATAKANA_DICT = "IKAnalyzer/ja_katakana.u8";
+	private static final String JAPANESE_DICT = "IKAnalyzer/japanese.u8";
 	private static final String KOREAN_DICT = "IKAnalyzer/korean.u8";
 	private static final String VIETNAM_DICT = "IKAnalyzer/vietnam.u8";
 
@@ -54,7 +54,7 @@ public class CJKVTokenizer {
 			extWords.add(s);
 		}
 
-		wordReader = new BufferedReader(new FileReader(KATAKANA_DICT));
+		wordReader = new BufferedReader(new FileReader(JAPANESE_DICT));
 		for (String s = wordReader.readLine(); s != null; s = wordReader
 				.readLine()) {
 			extWords.add(s);

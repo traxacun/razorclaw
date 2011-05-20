@@ -26,18 +26,19 @@ public class BM25F {
 			_avgAdminKeywordsLength = 3.0, _avgSpiderKeywordsLength = 3.0;
 
 	// length of phrases(number of characters)
-	private static final double _avgPhraseLength = 5.5;
+	private static final double _avgLength = 5.5;
 
-	private static final double _titleBoost = 13.5, _metaKeywordsBoost = 5.0,
-			_metaDescriptionBoost = 3.0, _anchorBoost = 5.0,
-			_userKeywordsBoost = 30.0, _adminKeywordsBoost = 20.0,
-			_spiderKeywordsBoost = 5.0, _h1Boost = 2.0, _h2Boost = 1.5,
-			_contentBoost = 1.0;
+	private static final double _titleW = 13.5, _metaKeywordsW = 5.0,
+			_metaDescriptionW = 3.0, _anchorW = 5.0, _userKeywordsW = 30.0,
+			_adminKeywordsW = 20.0, _spiderKeywordsW = 5.0, _h1W = 2.0,
+			_h2W = 1.5, _contentW = 1.0, _lengthW = 1.0;
 
-	private static final double _contentB = 0.3, _paraK = 4.9, _titleB = 0.4,
+	private static final double _contentB = 0.3, _titleB = 0.4,
 			_metaKeywordsB = 0.4, _metaDescriptionB = 0.4, _anchorB = 0.4,
 			_adminKeywordsB = 0.4, _spiderKeywordsB = 0.4,
-			_userKeywordsB = 0.4, _h1B = 0.4, _h2B = 0.4;
+			_userKeywordsB = 0.4, _h1B = 0.4, _h2B = 0.4, _lengthB = 0.4;
+
+	private static final double _paraK = 4.9;
 
 	/**
      * 
@@ -48,10 +49,15 @@ public class BM25F {
 		// rank all phrases against the document
 		for (Entry<String, PhraseProperty> e : phrases.entrySet()) {
 			// weight on different features
+			// ---------------length----------------
+			double lengthWeight = 0.0;
+			lengthWeight = _lengthW
+					/ ((1 - _lengthB) + _lengthB * _avgLength
+							/ e.getKey().length());
 			// --------------title-------------------
 			double titleWeight = 0.0;
 			if (e.getValue().isTitle()) {
-				titleWeight = _titleBoost
+				titleWeight = _titleW
 						/ ((1 - _titleB) + _titleB
 								* webpageMeta.getTitle().size()
 								/ _avgTitleLength);
@@ -59,7 +65,7 @@ public class BM25F {
 			// ---------------meta keywords---------------
 			double metaKeywordsWeight = 0.0;
 			if (e.getValue().isMetaKeywords()) {
-				metaKeywordsWeight = _metaKeywordsBoost
+				metaKeywordsWeight = _metaKeywordsW
 						/ ((1 - _metaKeywordsB) + _metaKeywordsB
 								* webpageMeta.getKeywords().size()
 								/ _avgMetaKeywordsLength);
@@ -67,7 +73,7 @@ public class BM25F {
 			// --------------meta description-----------------
 			double metaDescriptionWeight = 0.0;
 			if (e.getValue().isMetaDescription()) {
-				metaDescriptionWeight = _metaDescriptionBoost
+				metaDescriptionWeight = _metaDescriptionW
 						/ ((1 - _metaDescriptionB) + _metaDescriptionB
 								* webpageMeta.getDescription().size()
 								/ _avgMetaDescriptionLength);
@@ -75,26 +81,27 @@ public class BM25F {
 			// ----------------------h1---------------------
 			double h1Weight = 0.0;
 			if (e.getValue().isH1()) {
-				h1Weight = _h1Boost
+				h1Weight = _h1W
 						/ ((1 - _h1B) + _h1B * webpageMeta.getH1().size()
 								/ _avgH1Length);
 			}
 			// ----------------------h2------------------
 			double h2Weight = 0.0;
 			if (e.getValue().isH2()) {
-				h2Weight = _h2Boost
+				h2Weight = _h2W
 						/ ((1 - _h2B) + _h2B * webpageMeta.getH2().size()
 								/ _avgH2Length);
 			}
 			// --------------------content-------------------
 			double contentWeight = 0.0;
-			contentWeight = _contentBoost
+			contentWeight = _contentW
+					* e.getValue().getOccurance()
 					/ ((1 - _contentB) + _contentB * phrases.size()
 							/ _avgContentLength);
 			// ------------anchor text----------------
 			double anchorTextWeight = 0.0;
 			if (e.getValue().isAnchorText()) {
-				anchorTextWeight = _anchorBoost
+				anchorTextWeight = _anchorW
 						/ ((1 - _anchorB) + _anchorB
 								* apiMeta.getRefererAnchorTexts().size()
 								/ _avgAnchorLength);
@@ -102,7 +109,7 @@ public class BM25F {
 			// -----------spider keywords-------------
 			double spiderKeywordsWeight = 0.0;
 			if (e.getValue().isSpiderKeywords()) {
-				spiderKeywordsWeight = _spiderKeywordsBoost
+				spiderKeywordsWeight = _spiderKeywordsW
 						/ ((1 - _spiderKeywordsB) + _spiderKeywordsB
 								* apiMeta.getSpiderKeywords().size()
 								/ _avgSpiderKeywordsLength);
@@ -110,7 +117,7 @@ public class BM25F {
 			// -----------admin keywords-------------
 			double adminKeywordsWeight = 0.0;
 			if (e.getValue().isAdminKeywords()) {
-				adminKeywordsWeight = _adminKeywordsBoost
+				adminKeywordsWeight = _adminKeywordsW
 						/ ((1 - _adminKeywordsB) + _adminKeywordsB
 								* apiMeta.getAdminKeywords().size()
 								/ _avgAdminKeywordsLength);
@@ -118,7 +125,7 @@ public class BM25F {
 			// -----------user keywords-------------
 			double userKeywordsWeight = 0.0;
 			if (e.getValue().isUserKeywords()) {
-				userKeywordsWeight = _userKeywordsBoost
+				userKeywordsWeight = _userKeywordsW
 						/ ((1 - _userKeywordsB) + _userKeywordsB
 								* apiMeta.getUserKeywords().size()
 								/ _avgUserKeywordsLength);
@@ -138,7 +145,7 @@ public class BM25F {
 			double weightScore = titleWeight + metaKeywordsWeight
 					+ metaDescriptionWeight + h1Weight + h2Weight
 					+ contentWeight + anchorTextWeight + spiderKeywordsWeight
-					+ adminKeywordsWeight + userKeywordsWeight;
+					+ adminKeywordsWeight + userKeywordsWeight + lengthWeight;
 
 			double score = weightScore / (_paraK + weightScore);
 
