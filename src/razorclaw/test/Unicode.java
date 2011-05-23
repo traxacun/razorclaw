@@ -12,15 +12,20 @@ import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 
+import javax.xml.bind.DatatypeConverter;
+
+import org.apache.hadoop.util.UTF8ByteArrayUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.mortbay.util.Utf8StringBuffer;
 import org.mozilla.intl.chardet.HtmlCharsetDetector;
 import org.mozilla.intl.chardet.nsDetector;
 import org.mozilla.intl.chardet.nsICharsetDetectionObserver;
@@ -34,6 +39,46 @@ public class Unicode {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		Unicode.UTF8Test();
+	}
+
+	public static void UTF8Test() {
+		try {
+			String s = "\u795e\u7ecf\u7f51\u7edc";
+
+			System.out.println(s);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private static byte[] fromHexString(final String encoded) {
+		if ((encoded.length() % 2) != 0)
+			throw new IllegalArgumentException(
+					"Input string must contain an even number of characters");
+
+		final byte result[] = new byte[encoded.length() / 2];
+		final char enc[] = encoded.toCharArray();
+		for (int i = 0; i < enc.length; i += 2) {
+			StringBuilder curr = new StringBuilder(2);
+			curr.append(enc[i]).append(enc[i + 1]);
+			result[i / 2] = (byte) Integer.parseInt(curr.toString(), 16);
+		}
+		return result;
+	}
+
+	public static byte[] hexStringToByteArray(String s) {
+		int len = s.length();
+		byte[] data = new byte[len / 2];
+		for (int i = 0; i < len; i += 2) {
+			data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4) + Character
+					.digit(s.charAt(i + 1), 16));
+		}
+		return data;
+	}
+
+	public static void charsetTest() {
 		try {
 			URL url = new URL(URL_STRING.toLowerCase());
 			URI uri = new URI(url.getProtocol(), url.getHost(), url.getPath(),

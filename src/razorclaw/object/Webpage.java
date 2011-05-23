@@ -108,7 +108,7 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 					.next()) {
 				// System.out.println(p);
 
-				if (p != null && !p.isEmpty() && p.length() > 2) {
+				if (p != null && !p.isEmpty() && p.length() > 1) {
 					// combine
 					if (getPhraseMap().containsKey(p)) {
 						getPhraseMap().get(p).increaseTFContent();
@@ -148,169 +148,103 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 	private void parseProperties() {
 		LOG.info("Parsing fields");
 
-		SremovalStemmer stemmer = new SremovalStemmer();
 		PhraseProperty property;
 
 		// ---------title------------
 		for (String s : getWebpageMeta().getTitle()) {
-			s = TextUtils.removePunctuation(s);
-			s = TextUtils.removeNonAlphabeticChars(s);
-			s = s.toLowerCase().trim();
-			if (s != null && !s.isEmpty()) {
-				s = stemmer.stem(s);
-				if (s == null || s.isEmpty() || StopwordsHandler.isStopwords(s)
-						|| s.length() < 3) {
+			if (getPhraseMap().containsKey(s)) {
+				getPhraseMap().get(s).increaseTFTitle();
+			} else { // not exists
+				property = new PhraseProperty();
+				property.increaseTFTitle().setNew(true)
+						.setForwardURL(getAPIMeta().getForwardURL());
 
-				} else {
-					if (getPhraseMap().containsKey(s)) {
-						getPhraseMap().get(s).increaseTFTitle();
-					} else { // not exists
-						property = new PhraseProperty();
-						property.increaseTFTitle().setNew(true)
-								.setForwardURL(getAPIMeta().getForwardURL());
-
-						getPhraseMap().put(s, property);
-					}
-				}
+				getPhraseMap().put(s, property);
 			}
 		}
 		// ------------metaKeywords-------------
 		for (String s : getWebpageMeta().getKeywords()) {
-			// s = TextUtils.removePunctuation(s);
-			// s = TextUtils.removeNonAlphabeticChars(s);
-			s = s.toLowerCase().trim();
-			if (s != null && !s.isEmpty()) {
-				s = stemmer.stem(s);
-				if (s == null || s.isEmpty() || StopwordsHandler.isStopwords(s)
-						|| s.length() < 3) {
+			if (getPhraseMap().containsKey(s)) {
+				getPhraseMap().get(s).increaseTFMetaKeywords();
+			} else { // not exists
+				property = new PhraseProperty();
+				property.increaseTFMetaKeywords().setNew(true)
+						.setForwardURL(getAPIMeta().getForwardURL());
 
-				} else {
-					if (getPhraseMap().containsKey(s)) {
-						getPhraseMap().get(s).increaseTFMetaKeywords();
-					} else { // not exists
-						property = new PhraseProperty();
-						property.increaseTFMetaKeywords().setNew(true)
-								.setForwardURL(getAPIMeta().getForwardURL());
-
-						getPhraseMap().put(s, property);
-					}
-				}
+				getPhraseMap().put(s, property);
 			}
 		}
+
 		// -------------metaDescription--------------
 		for (String s : getWebpageMeta().getDescription()) {
-			// s = TextUtils.removePunctuation(s);
-			// s = TextUtils.removeNonAlphabeticChars(s);
-			s = s.toLowerCase().trim();
-			if (s != null && !s.isEmpty()) {
-				s = stemmer.stem(s);
-				if (s == null || s.isEmpty() || StopwordsHandler.isStopwords(s)
-						|| s.length() < 3) {
 
-				} else {
-					if (getPhraseMap().containsKey(s)) {
-						getPhraseMap().get(s).increaseTFMetaDescription();
-					} else { // not exists
-						property = new PhraseProperty();
-						property.increaseTFMetaDescription().setNew(true)
-								.setForwardURL(getAPIMeta().getForwardURL());
+			if (getPhraseMap().containsKey(s)) {
+				getPhraseMap().get(s).increaseTFMetaDescription();
+			} else { // not exists
+				property = new PhraseProperty();
+				property.increaseTFMetaDescription().setNew(true)
+						.setForwardURL(getAPIMeta().getForwardURL());
 
-						getPhraseMap().put(s, property);
-					}
-				}
+				getPhraseMap().put(s, property);
 			}
 		}
 		// -------------anchor text--------------------
 		for (RefererAnchorText text : getAPIMeta().getRefererAnchorTexts()) {
 			String s = text.getAnchorText();
-			// s = TextUtils.removePunctuation(s);
-			// s = TextUtils.removeNonAlphabeticChars(s);
-			s = s.toLowerCase().trim();
-			if (s != null && !s.isEmpty()) {
-				s = stemmer.stem(s);
-				if (s == null || s.isEmpty() || StopwordsHandler.isStopwords(s)
-						|| s.length() < 3) {
 
-				} else {
-					if (getPhraseMap().containsKey(s)) {
-						getPhraseMap().get(s).increaseTFAnchor();
-					} else { // not exists
-						property = new PhraseProperty();
-						property.increaseTFAnchor().setNew(true)
-								.setForwardURL(getAPIMeta().getForwardURL());
+			if (getPhraseMap().containsKey(s)) {
+				getPhraseMap().get(s).increaseTFAnchor();
+			} else { // not exists
+				property = new PhraseProperty();
+				property.increaseTFAnchor().setNew(true)
+						.setForwardURL(getAPIMeta().getForwardURL());
 
-						getPhraseMap().put(s, property);
-					}
-				}
+				getPhraseMap().put(s, property);
 			}
 		}
 		// ------------------spider keywords-----------------
 		for (String s : getAPIMeta().getSpiderKeywords()) {
-			// s = TextUtils.removePunctuation(s);
-			// s = TextUtils.removeNonAlphabeticChars(s);
+
 			s = s.toLowerCase().trim();
-			if (s != null && !s.isEmpty()) {
-				s = stemmer.stem(s);
-				if (s == null || s.isEmpty() || StopwordsHandler.isStopwords(s)
-						|| s.length() < 3) {
 
-				} else {
-					if (getPhraseMap().containsKey(s)) {
-						getPhraseMap().get(s).setSpiderKeywords(true);
-					} else { // not exists
-						property = new PhraseProperty();
-						property.setSpiderKeywords(true).setNew(true)
-								.setForwardURL(getAPIMeta().getForwardURL());
+			if (getPhraseMap().containsKey(s)) {
+				getPhraseMap().get(s).setSpiderKeywords(true);
+			} else { // not exists
+				property = new PhraseProperty();
+				property.setSpiderKeywords(true).setNew(true)
+						.setForwardURL(getAPIMeta().getForwardURL());
 
-						getPhraseMap().put(s, property);
-					}
-				}
+				getPhraseMap().put(s, property);
 			}
 		}
 		// ------------------admin keywords-----------------
 		for (String s : getAPIMeta().getAdminKeywords()) {
-			// s = TextUtils.removePunctuation(s);
-			// s = TextUtils.removeNonAlphabeticChars(s);
+
 			s = s.toLowerCase().trim();
-			if (s != null && !s.isEmpty()) {
-				s = stemmer.stem(s);
-				if (s == null || s.isEmpty() || StopwordsHandler.isStopwords(s)
-						|| s.length() < 3) {
 
-				} else {
-					if (getPhraseMap().containsKey(s)) {
-						getPhraseMap().get(s).setAdminKeywords(true);
-					} else { // not exists
-						property = new PhraseProperty();
-						property.setAdminKeywords(true).setNew(true)
-								.setForwardURL(getAPIMeta().getForwardURL());
+			if (getPhraseMap().containsKey(s)) {
+				getPhraseMap().get(s).setAdminKeywords(true);
+			} else { // not exists
+				property = new PhraseProperty();
+				property.setAdminKeywords(true).setNew(true)
+						.setForwardURL(getAPIMeta().getForwardURL());
 
-						getPhraseMap().put(s, property);
-					}
-				}
+				getPhraseMap().put(s, property);
 			}
 		}
 		// ------------------user keywords-----------------
 		for (String s : getAPIMeta().getUserKeywords()) {
-			// s = TextUtils.removePunctuation(s);
-			// s = TextUtils.removeNonAlphabeticChars(s);
+
 			s = s.toLowerCase().trim();
-			if (s != null && !s.isEmpty()) {
-				s = stemmer.stem(s);
-				if (s == null || s.isEmpty() || StopwordsHandler.isStopwords(s)
-						|| s.length() < 3) {
 
-				} else {
-					if (getPhraseMap().containsKey(s)) {
-						getPhraseMap().get(s).setUserKeywords(true);
-					} else { // not exists
-						property = new PhraseProperty();
-						property.setUserKeywords(true).setNew(true)
-								.setForwardURL(getAPIMeta().getForwardURL());
+			if (getPhraseMap().containsKey(s)) {
+				getPhraseMap().get(s).setUserKeywords(true);
+			} else { // not exists
+				property = new PhraseProperty();
+				property.setUserKeywords(true).setNew(true)
+						.setForwardURL(getAPIMeta().getForwardURL());
 
-						getPhraseMap().put(s, property);
-					}
-				}
+				getPhraseMap().put(s, property);
 			}
 		}
 
@@ -318,9 +252,9 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 		// @formatter:off
 		for (Entry<String, PhraseProperty> e : getPhraseMap().entrySet()) {
 			e.getValue()
-					.setPartOfSpeech(
-							PartOfSpeech.load(OpenNLPPOSTagger.getWordTag(e
-									.getKey())))
+			// .setPartOfSpeech(
+			// PartOfSpeech.load(OpenNLPPOSTagger.getWordTag(e
+			// .getKey())))
 					.setTFScore(
 							(double) e.getValue().getTFContent()
 									/ getPhraseMap().size());

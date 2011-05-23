@@ -116,15 +116,16 @@ public class BM25F {
 								/ _avgUserKeywordsLength);
 			}
 			// IDF
-			ArrayList<PhraseProperty> properties = PhraseStoreHandler.get(e
-					.getKey());
-			int documentCount = 1;
-			if (properties != null) {
-				documentCount = properties.size();
-			}
-			double idfScore = Math.log((DomainStoreHandler.getDocumentsNumber()
-					- documentCount + 0.1)
-					/ (documentCount + 0.1));
+			// ArrayList<PhraseProperty> properties = PhraseStoreHandler.get(e
+			// .getKey());
+			// int documentCount = 1;
+			// if (properties != null) {
+			// documentCount = properties.size();
+			// }
+			// double idfScore =
+			// Math.log((DomainStoreHandler.getDocumentsNumber()
+			// - documentCount + 0.1)
+			// / (documentCount + 0.1));
 
 			// pseudo score
 			double weightScore = titleWeight + metaKeywordsWeight
@@ -133,13 +134,13 @@ public class BM25F {
 					+ adminKeywordsWeight + userKeywordsWeight + lengthWeight;
 
 			// saturation
-			double score = idfScore * weightScore / (_paraK + weightScore);
+			double score = weightScore / (_paraK + weightScore);
 
 			// record the score
 			e.getValue().setBM25FScore(score);
 
 			// output
-			System.out.println(e.getKey() + ": " + score);
+			// System.out.println(e.getKey() + ": " + score);
 		}
 	}
 }
