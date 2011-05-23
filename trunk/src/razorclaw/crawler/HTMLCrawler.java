@@ -35,9 +35,9 @@ public class HTMLCrawler {
 		String targetURL = web.getAPIMeta().getForwardURL();
 		LOG.info("Crawling webpage: " + targetURL);
 
-		if (checkCache(targetURL)) {
-			return loadCache(targetURL);
-		}
+		// if (checkCache(targetURL)) {
+		// return loadCache(targetURL);
+		// }
 
 		// reform to deal with special characters
 		URL url = new URL(targetURL);
@@ -94,7 +94,7 @@ public class HTMLCrawler {
 		web.setHtml(doc.html());
 		web.setText(doc.text());
 
-		saveCache(targetURL, web);
+		// saveCache(targetURL, web);
 
 		return web;
 	}

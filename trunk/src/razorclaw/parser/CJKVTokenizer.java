@@ -10,8 +10,7 @@ import org.wltea.analyzer.IKSegmentation;
 import org.wltea.analyzer.Lexeme;
 
 public class CJKVTokenizer {
-	private static final String SIMPLIFIED_DICT = "IKAnalyzer/cedict_simplified.u8";
-	private static final String TRADITIONAL_DICT = "IKAnalyzer/cedict_traditional.u8";
+	private static final String CHINESE_DICT = "IKAnalyzer/chinese.u8";
 	private static final String JAPANESE_DICT = "IKAnalyzer/japanese.u8";
 	private static final String KOREAN_DICT = "IKAnalyzer/korean.u8";
 	private static final String VIETNAM_DICT = "IKAnalyzer/vietnam.u8";
@@ -42,17 +41,13 @@ public class CJKVTokenizer {
 	private static void init() throws IOException {
 		ArrayList<String> extWords = new ArrayList<String>();
 		BufferedReader wordReader = new BufferedReader(new FileReader(
-				SIMPLIFIED_DICT));
+				CHINESE_DICT));
 		for (String s = wordReader.readLine(); s != null; s = wordReader
 				.readLine()) {
 			extWords.add(s);
 		}
-
-		wordReader = new BufferedReader(new FileReader(TRADITIONAL_DICT));
-		for (String s = wordReader.readLine(); s != null; s = wordReader
-				.readLine()) {
-			extWords.add(s);
-		}
+		org.wltea.analyzer.dic.Dictionary.loadExtendWords(extWords);
+		extWords.clear();
 
 		wordReader = new BufferedReader(new FileReader(JAPANESE_DICT));
 		for (String s = wordReader.readLine(); s != null; s = wordReader
@@ -60,6 +55,7 @@ public class CJKVTokenizer {
 			extWords.add(s);
 		}
 		org.wltea.analyzer.dic.Dictionary.loadExtendWords(extWords);
+		extWords.clear();
 
 		wordReader = new BufferedReader(new FileReader(KOREAN_DICT));
 		for (String s = wordReader.readLine(); s != null; s = wordReader
@@ -67,6 +63,7 @@ public class CJKVTokenizer {
 			extWords.add(s);
 		}
 		org.wltea.analyzer.dic.Dictionary.loadExtendWords(extWords);
+		extWords.clear();
 
 		wordReader = new BufferedReader(new FileReader(VIETNAM_DICT));
 		for (String s = wordReader.readLine(); s != null; s = wordReader
@@ -74,6 +71,7 @@ public class CJKVTokenizer {
 			extWords.add(s);
 		}
 		org.wltea.analyzer.dic.Dictionary.loadExtendWords(extWords);
+		extWords.clear();
 
 		_initialzied = true;
 	}

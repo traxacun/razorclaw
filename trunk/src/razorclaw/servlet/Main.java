@@ -87,7 +87,7 @@ public class Main extends HttpServlet {
 
 			// --------always save inverse document index ------------
 			LOG.info("Saving inverse document index");
-			saveIndex(web);
+			// saveIndex(web);
 
 			if (req.getParameter("buildIndex") != null
 					&& req.getParameter("buildIndex").equals("1")) {
@@ -103,6 +103,8 @@ public class Main extends HttpServlet {
 				setStatus(Status.RANKED);
 				// -------------sort and output------------
 				sort(web.getPhraseMap());
+
+				System.out.println(_keyPhrase.getKeyphrase());
 
 				String result = JSON.encode(_keyPhrase);
 				resp.setContentType("text/html; charset=UTF-8");

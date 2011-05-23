@@ -12,7 +12,9 @@ import org.jsoup.select.Elements;
 
 import razorclaw.object.Dictionaries.HtmlVersion;
 import razorclaw.parser.CJKVTokenizer;
+import razorclaw.parser.StopwordsHandler;
 import razorclaw.util.CCCEDICTProcessor;
+import razorclaw.util.TextUtils;
 
 /**
  * Stores metadata extracted from a webpage, including title, h1, h2, and
@@ -32,6 +34,8 @@ public class WebpageMeta implements Serializable {
 	private static final long serialVersionUID = -7118304523690937732L;
 
 	private final HtmlVersion _htmlVersion = HtmlVersion.UNKNOWN;
+
+	private static final int MINIMUM_LENGTH = 2;
 
 	/**
 	 * These are non-formal metadata and may not exist in all webpages.
@@ -81,7 +85,9 @@ public class WebpageMeta implements Serializable {
 					CJKVTokenizer.feed(new StringReader(doc.title()));
 					for (String s = CJKVTokenizer.next(); s != null; s = CJKVTokenizer
 							.next()) {
-						_description.add(s);
+						if (s.length() >= MINIMUM_LENGTH) {
+							_description.add(s);
+						}
 					}
 				} else {
 					// String content =
@@ -90,7 +96,8 @@ public class WebpageMeta implements Serializable {
 					String[] arr = e.attr("content").split(" ");
 
 					for (String s : arr) {
-						if (!s.trim().isEmpty()) {
+						if (!s.trim().isEmpty()
+								&& !StopwordsHandler.isStopwords(s)) {
 							_description.add(s);
 						}
 					}
@@ -107,40 +114,17 @@ public class WebpageMeta implements Serializable {
 			// title
 			for (String s = CJKVTokenizer.next(); s != null; s = CJKVTokenizer
 					.next()) {
-				_title.add(s);
-			}
-			// h1
-			elements = doc.getElementsByTag("h1");
-			for (it = elements.iterator(); it.hasNext();) {
-				CJKVTokenizer.feed(new StringReader(it.next().text()));
-				for (String s = CJKVTokenizer.next(); s != null; s = CJKVTokenizer
-						.next()) {
-					_h1.add(s);
-				}
-			}
-			// h2
-			elements = doc.getElementsByTag("h2");
-			for (it = elements.iterator(); it.hasNext();) {
-				CJKVTokenizer.feed(new StringReader(it.next().text()));
-				for (String s = CJKVTokenizer.next(); s != null; s = CJKVTokenizer
-						.next()) {
-					_h2.add(s);
-				}
-			}
-		} else {
-			// title
-			String[] arr = doc.title().split(" |,");
-			for (String s : arr) {
-				if (!s.trim().isEmpty()) {
+				if (s.length() >= MINIMUM_LENGTH) {
 					_title.add(s);
 				}
 			}
 			// h1
 			elements = doc.getElementsByTag("h1");
 			for (it = elements.iterator(); it.hasNext();) {
-				arr = it.next().text().split("");
-				for (String s : arr) {
-					if (!s.trim().isEmpty()) {
+				CJKVTokenizer.feed(new StringReader(it.next().text()));
+				for (String s = CJKVTokenizer.next(); s != null; s = CJKVTokenizer
+						.next()) {
+					if (s.length() >= MINIMUM_LENGTH) {
 						_h1.add(s);
 					}
 				}
@@ -148,9 +132,38 @@ public class WebpageMeta implements Serializable {
 			// h2
 			elements = doc.getElementsByTag("h2");
 			for (it = elements.iterator(); it.hasNext();) {
-				arr = it.next().text().split("");
+				CJKVTokenizer.feed(new StringReader(it.next().text()));
+				for (String s = CJKVTokenizer.next(); s != null; s = CJKVTokenizer
+						.next()) {
+					if (s.length() >= MINIMUM_LENGTH) {
+						_h2.add(s);
+					}
+				}
+			}
+		} else {
+			// title
+			String[] arr = doc.title().split(TextUtils.replacePattern + "| |/");
+			for (String s : arr) {
+				if (!s.trim().isEmpty() && !StopwordsHandler.isStopwords(s)) {
+					_title.add(s);
+				}
+			}
+			// h1
+			elements = doc.getElementsByTag("h1");
+			for (it = elements.iterator(); it.hasNext();) {
+				arr = it.next().text().split(TextUtils.replacePattern + "| |/");
 				for (String s : arr) {
-					if (!s.trim().isEmpty()) {
+					if (!s.trim().isEmpty() && !StopwordsHandler.isStopwords(s)) {
+						_h1.add(s);
+					}
+				}
+			}
+			// h2
+			elements = doc.getElementsByTag("h2");
+			for (it = elements.iterator(); it.hasNext();) {
+				arr = it.next().text().split(TextUtils.replacePattern + "| |/");
+				for (String s : arr) {
+					if (!s.trim().isEmpty() && !StopwordsHandler.isStopwords(s)) {
 						_h2.add(s);
 					}
 				}
