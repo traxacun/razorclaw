@@ -23,7 +23,7 @@ import razorclaw.object.Dictionaries.Status;
 import razorclaw.object.PhraseProperty;
 import razorclaw.object.Webpage;
 import razorclaw.object.WebpageMeta;
-import razorclaw.object.Keyphrase;
+import razorclaw.object.KeyPhrase;
 import razorclaw.ranker.BM25F;
 import razorclaw.ranker.UniversalComparator;
 import razorclaw.tk.StatsAPI;
@@ -38,9 +38,6 @@ public class Main extends HttpServlet {
 	private String _domain;
 
 	private Status _status;
-
-	// output
-	private Keyphrase _keyPhrase;
 
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -86,34 +83,34 @@ public class Main extends HttpServlet {
 			web.parse();
 
 			// --------always save inverse document index ------------
-			LOG.info("Saving inverse document index");
+			// LOG.info("Saving inverse document index");
 			// saveIndex(web);
 
-			if (req.getParameter("buildIndex") != null
-					&& req.getParameter("buildIndex").equals("1")) {
+			// if (req.getParameter("buildIndex") != null
+			// && req.getParameter("buildIndex").equals("1")) {
+			//
+			// } else {
+			// -------------rank part-----------------
+			setStatus(Status.RANKING);
 
-			} else {
-				// -------------rank part-----------------
-				setStatus(Status.RANKING);
+			LOG.info("Ranking phrases");
+			BM25F.rank(web.getWebpageMeta(), web.getAPIMeta(),
+					web.getPhraseMap());
 
-				LOG.info("Ranking phrases");
-				BM25F.rank(web.getWebpageMeta(), web.getAPIMeta(),
-						web.getPhraseMap());
+			setStatus(Status.RANKED);
+			// -------------sort and output------------
+			KeyPhrase keyPhrase = sort(web.getPhraseMap());
 
-				setStatus(Status.RANKED);
-				// -------------sort and output------------
-				sort(web.getPhraseMap());
+			System.out.println(keyPhrase.getKeyphrase());
 
-				System.out.println(_keyPhrase.getKeyphrase());
+			String result = JSON.encode(keyPhrase);
+			resp.setContentType("text/html; charset=UTF-8");
+			resp.setCharacterEncoding("UTF-8");
 
-				String result = JSON.encode(_keyPhrase);
-				resp.setContentType("text/html; charset=UTF-8");
-				resp.setCharacterEncoding("UTF-8");
+			resp.getWriter().println(result);
 
-				resp.getWriter().println(result);
-
-				setStatus(Status.FINISHED);
-			}
+			setStatus(Status.FINISHED);
+			// }
 		} catch (CacheException e) {
 			LOG.severe("Memcached failed");
 			LOG.severe("Generating keyphrase failed");
@@ -131,18 +128,20 @@ public class Main extends HttpServlet {
 	 * 
 	 * @param phraseMap
 	 */
-	private void sort(HashMap<String, PhraseProperty> phraseMap) {
+	private KeyPhrase sort(HashMap<String, PhraseProperty> phraseMap) {
 		List<Entry<String, PhraseProperty>> phrases = new LinkedList<Entry<String, PhraseProperty>>(
 				phraseMap.entrySet());
 		Collections.sort(phrases, new UniversalComparator());
 
 		// get the top 3
-		_keyPhrase = new Keyphrase();
-		_keyPhrase.setDomain(_domain);
+		KeyPhrase keyPhrase = new KeyPhrase();
+		keyPhrase.setDomain(_domain);
 
 		for (int i = 0; i < 3 && i < phrases.size(); i++) {
-			_keyPhrase.appendKeyPhrase(phrases.get(i).getKey());
+			keyPhrase.appendKeyPhrase(phrases.get(i).getKey());
 		}
+
+		return keyPhrase;
 	}
 
 	/**
