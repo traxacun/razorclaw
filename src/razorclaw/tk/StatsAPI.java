@@ -17,14 +17,14 @@ public class StatsAPI {
 	private static final Logger LOG = Logger
 			.getLogger(StatsAPI.class.getName());
 
-	public static APIMeta crawl(String domain) throws APICrawlException {
+	public static APIMeta crawl(String domain) {
 		LOG.info("Crawling metadata from stats.tk API");
 
 		String forwardURL = "";
 		APIMeta apiMeta = new APIMeta();
 
 		// to survive the time-out exception
-		for (int i = 0; i < 5 && (forwardURL == null || forwardURL.isEmpty()); i++) {
+		for (int i = 0; forwardURL != null && (i < 3 && forwardURL.isEmpty()); i++) {
 			try {
 				// get all meta data from dot.tk API
 				URLConnection conn = (new URL(API_BASE + domain))
@@ -41,6 +41,7 @@ public class StatsAPI {
 				}
 				// parse the response
 				apiMeta = JSON.decode(content, APIMeta.class);
+				// would be none if user using own DNS
 				forwardURL = apiMeta.getForwardURL();
 			} catch (IOException e) {
 				// timeout exception
@@ -48,14 +49,14 @@ public class StatsAPI {
 			}
 		}
 
-		if (forwardURL == null || forwardURL.isEmpty()) {
-			LOG.severe("Crawling metadata from stats.tk API failed");
-
-			throw new APICrawlException();
-		} else {
-			LOG.info("ForwardURL parsed: " + domain + ", " + forwardURL);
-			return apiMeta;
+		// wrong format API response. user is using own DNS.
+		if (forwardURL == null) {
+			LOG.warning("Using domain as the forwardURL");
+			apiMeta.setForwardurl("http://" + domain);
 		}
+
+		LOG.info("ForwardURL parsed: " + domain + ", " + forwardURL);
+		return apiMeta;
 	}
 
 }

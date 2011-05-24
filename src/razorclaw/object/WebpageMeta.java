@@ -90,14 +90,9 @@ public class WebpageMeta implements Serializable {
 						}
 					}
 				} else {
-					// String content =
-					// TextUtils.removePunctuation(e.attr("content"));
-					// content = TextUtils.removeNonAlphabeticChars(content);
-					String[] arr = e.attr("content").split(" ");
-
-					for (String s : arr) {
-						if (!s.trim().isEmpty()
-								&& !StopwordsHandler.isStopwords(s)) {
+					for (String s : e.attr("content").split(
+							TextUtils.replacePattern + "| |/")) {
+						if (!s.trim().isEmpty()) {
 							_description.add(s);
 						}
 					}

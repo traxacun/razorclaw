@@ -6,7 +6,7 @@ package razorclaw.object;
  * @author Shuai YUAN
  * 
  */
-public class Keyphrase {
+public class KeyPhrase {
 	private String _domain;
 	private String _keyphrase;
 

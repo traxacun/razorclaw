@@ -82,11 +82,12 @@ public class HTMLCrawler {
 			det.DoIt(webpageContent.toByteArray(), webpageContent.size(), false);
 			det.DataEnd();
 
+			// could be null!
 			_charset = web.getWebpageMeta().getCharset();
 
 			LOG.warning("Trying with charset: " + _charset);
 		}
-		if (!_charset.equalsIgnoreCase("UTF-8")) {
+		if (_charset != null && !_charset.equalsIgnoreCase("UTF-8")) {
 			String content = new String(webpageContent.toString(_charset));
 			// parse using given charset
 			doc = Jsoup.parse(content);

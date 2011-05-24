@@ -28,9 +28,9 @@ public class BM25F {
 	// length of phrases(number of characters)
 	private static final double _avgLength = 5.5;
 
-	private static final double _titleW = 13.5, _metaKeywordsW = 5.0,
+	private static final double _titleW = 10.0, _metaKeywordsW = 5.0,
 			_metaDescriptionW = 3.0, _anchorW = 5.0, _userKeywordsW = 30.0,
-			_adminKeywordsW = 20.0, _spiderKeywordsW = 5.0, _h1W = 2.0,
+			_adminKeywordsW = 20.0, _spiderKeywordsW = 1.0, _h1W = 2.0,
 			_h2W = 1.5, _contentW = 1.0, _lengthW = 1.0;
 
 	private static final double _contentB = 0.3, _titleB = 0.4,
