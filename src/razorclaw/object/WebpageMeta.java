@@ -10,9 +10,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import razorclaw.linguistic.parser.CJKVTokenizer;
+import razorclaw.linguistic.parser.StopwordsHandler;
 import razorclaw.object.Dictionaries.HtmlVersion;
-import razorclaw.parser.CJKVTokenizer;
-import razorclaw.parser.StopwordsHandler;
 import razorclaw.util.CCCEDICTProcessor;
 import razorclaw.util.TextUtils;
 

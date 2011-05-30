@@ -24,7 +24,7 @@ public class PhraseProperty implements Serializable {
 	private boolean _isSpiderKeywords, _isAdminKeywords, _isUserKeywords;
 
 	private int _TFContent, _TFTitle, _TFH1, _TFH2, _TFMetaKeywords,
-			_TFMetaDescription, _TFCaptital, _TFAnchor;
+			_TFMetaDescription, _TFCaptital, _TFAnchor, _TFSearchQuery;
 
 	private PartOfSpeech _partOfSpeech;
 	/**
@@ -35,7 +35,7 @@ public class PhraseProperty implements Serializable {
 	public PhraseProperty() {
 		_forwardURL = "";
 
-		_TFContent = _TFTitle = _TFH1 = _TFH2 = _TFMetaDescription = _TFMetaKeywords = _TFCaptital = _TFAnchor = 0;
+		_TFContent = _TFTitle = _TFH1 = _TFH2 = _TFMetaDescription = _TFMetaKeywords = _TFCaptital = _TFAnchor = _TFSearchQuery = 0;
 
 		_tfScore = _idfScore = _tfidfScore = _bm25fScore = _languageModelScore = 0.0;
 
@@ -234,6 +234,15 @@ public class PhraseProperty implements Serializable {
 
 	public int getTFCaptital() {
 		return _TFCaptital;
+	}
+
+	public PhraseProperty increaseTFSearchQuery() {
+		this._TFSearchQuery++;
+		return this;
+	}
+
+	public int getTFSearchQuery() {
+		return _TFSearchQuery;
 	}
 
 }

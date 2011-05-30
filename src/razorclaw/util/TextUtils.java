@@ -1,5 +1,8 @@
 package razorclaw.util;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -7,6 +10,14 @@ import com.cybozu.labs.langdetect.Detector;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 
+/**
+ * @author Shuai Yuan
+ *
+ */
+/**
+ * @author Shuai Yuan
+ * 
+ */
 public class TextUtils {
 	private static final Logger LOG = Logger.getLogger(TextUtils.class
 			.getName());
@@ -88,6 +99,22 @@ public class TextUtils {
 			LOG.warning("Un-recongnized language. Using English as default.");
 
 			return "en";
+		}
+	}
+
+	/**
+	 * check if a string is URL
+	 * 
+	 * @param text
+	 * @return
+	 */
+	public static boolean isURL(String text) {
+		try {
+			new URL(text);
+
+			return true;
+		} catch (Exception e) {
+			return false;
 		}
 	}
 }

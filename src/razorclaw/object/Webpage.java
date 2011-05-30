@@ -9,14 +9,14 @@ import java.util.logging.Logger;
 
 import org.mozilla.intl.chardet.nsICharsetDetectionObserver;
 
+import razorclaw.linguistic.parser.BasicTokenizer;
+import razorclaw.linguistic.parser.CJKVTokenizer;
+import razorclaw.linguistic.parser.OpenNLPPOSTagger;
+import razorclaw.linguistic.parser.OpenNLPTokenizer;
+import razorclaw.linguistic.parser.StopwordsHandler;
+import razorclaw.linguistic.stemmer.SremovalStemmer;
 import razorclaw.object.APIMeta.RefererAnchorText;
 import razorclaw.object.Dictionaries.PartOfSpeech;
-import razorclaw.parser.BasicTokenizer;
-import razorclaw.parser.CJKVTokenizer;
-import razorclaw.parser.OpenNLPPOSTagger;
-import razorclaw.parser.OpenNLPTokenizer;
-import razorclaw.parser.StopwordsHandler;
-import razorclaw.parser.stemmer.SremovalStemmer;
 import razorclaw.util.TextUtils;
 
 /**
@@ -76,6 +76,11 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 			SremovalStemmer stemmer = new SremovalStemmer();
 
 			for (String p : OpenNLPTokenizer.tokenize(getText(), lang)) {
+				// skip URL
+				if (TextUtils.isURL(p)) {
+					continue;
+				}
+
 				p = TextUtils.removePunctuation(p);
 				p = TextUtils.removeNonAlphabeticChars(p);
 				p = p.toLowerCase().trim();
@@ -106,7 +111,10 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 
 			for (String p = CJKVTokenizer.next(); p != null; p = CJKVTokenizer
 					.next()) {
-				// System.out.println(p);
+				// skip URL
+				if (TextUtils.isURL(p)) {
+					continue;
+				}
 
 				if (p != null && !p.isEmpty() && p.length() > 1) {
 					// combine
@@ -126,6 +134,11 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 			LOG.warning("Using basic tokenizer");
 			// use default String.split()
 			for (String p : BasicTokenizer.tokenize(getText(), lang)) {
+				// skip URL
+				if (TextUtils.isURL(p)) {
+					continue;
+				}
+
 				if (p != null && !p.isEmpty() && p.length() > 2) {
 					// combine
 					if (getPhraseMap().containsKey(p)) {
@@ -149,9 +162,13 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 		LOG.info("Parsing fields");
 
 		PhraseProperty property;
-
 		// ---------title------------
 		for (String s : getWebpageMeta().getTitle()) {
+			// skip URL
+			if (TextUtils.isURL(s)) {
+				continue;
+			}
+
 			if (getPhraseMap().containsKey(s)) {
 				getPhraseMap().get(s).increaseTFTitle();
 			} else { // not exists
@@ -164,6 +181,11 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 		}
 		// ------------metaKeywords-------------
 		for (String s : getWebpageMeta().getKeywords()) {
+			// skip URL
+			if (TextUtils.isURL(s)) {
+				continue;
+			}
+
 			if (getPhraseMap().containsKey(s)) {
 				getPhraseMap().get(s).increaseTFMetaKeywords();
 			} else { // not exists
@@ -177,6 +199,10 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 
 		// -------------metaDescription--------------
 		for (String s : getWebpageMeta().getDescription()) {
+			// skip URL
+			if (TextUtils.isURL(s)) {
+				continue;
+			}
 
 			if (getPhraseMap().containsKey(s)) {
 				getPhraseMap().get(s).increaseTFMetaDescription();
@@ -191,6 +217,10 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 		// -------------anchor text--------------------
 		for (RefererAnchorText text : getAPIMeta().getRefererAnchorTexts()) {
 			String s = text.getAnchorText();
+			// skip URL
+			if (TextUtils.isURL(s)) {
+				continue;
+			}
 
 			if (getPhraseMap().containsKey(s)) {
 				getPhraseMap().get(s).increaseTFAnchor();
@@ -204,9 +234,7 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 		}
 		// ------------------spider keywords-----------------
 		for (String s : getAPIMeta().getSpiderKeywords()) {
-
 			s = s.toLowerCase().trim();
-
 			if (getPhraseMap().containsKey(s)) {
 				getPhraseMap().get(s).setSpiderKeywords(true);
 			} else { // not exists
@@ -219,33 +247,72 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 		}
 		// ------------------admin keywords-----------------
 		for (String s : getAPIMeta().getAdminKeywords()) {
-
 			s = s.toLowerCase().trim();
+			if (!s.isEmpty()) {
+				if (getPhraseMap().containsKey(s)) {
+					getPhraseMap().get(s).setAdminKeywords(true);
+				} else { // not exists
+					property = new PhraseProperty();
+					property.setAdminKeywords(true).setNew(true)
+							.setForwardURL(getAPIMeta().getForwardURL());
 
-			if (getPhraseMap().containsKey(s)) {
-				getPhraseMap().get(s).setAdminKeywords(true);
-			} else { // not exists
-				property = new PhraseProperty();
-				property.setAdminKeywords(true).setNew(true)
-						.setForwardURL(getAPIMeta().getForwardURL());
-
-				getPhraseMap().put(s, property);
+					getPhraseMap().put(s, property);
+				}
 			}
 		}
 		// ------------------user keywords-----------------
 		for (String s : getAPIMeta().getUserKeywords()) {
+			// skip URL
+			if (TextUtils.isURL(s)) {
+				continue;
+			}
 
 			s = s.toLowerCase().trim();
+			if (!s.isEmpty()) {
+				if (getPhraseMap().containsKey(s)) {
+					getPhraseMap().get(s).setUserKeywords(true);
+				} else { // not exists
+					property = new PhraseProperty();
+					property.setUserKeywords(true).setNew(true)
+							.setForwardURL(getAPIMeta().getForwardURL());
 
-			if (getPhraseMap().containsKey(s)) {
-				getPhraseMap().get(s).setUserKeywords(true);
-			} else { // not exists
-				property = new PhraseProperty();
-				property.setUserKeywords(true).setNew(true)
-						.setForwardURL(getAPIMeta().getForwardURL());
-
-				getPhraseMap().put(s, property);
+					getPhraseMap().put(s, property);
+				}
 			}
+		}
+		// -------------------search keywords in referers--------------
+		for (String s : getAPIMeta().getReferers()) {
+			int startPos = s.indexOf("q=");
+			if (startPos == -1) {
+				continue;
+			}
+			int endPos = s.indexOf("&", startPos);
+			if (endPos == -1) {
+				continue;
+			}
+
+			String query = s.substring(startPos + 2, endPos);
+
+			if (query != null && !query.isEmpty()) {
+				String[] array = query.toLowerCase().split(" |\\+");
+				for (String token : array) {
+					if (TextUtils.isURL(token)) {
+						continue;
+					} else {
+						if (getPhraseMap().containsKey(token)) {
+							getPhraseMap().get(token).increaseTFSearchQuery();
+						} else { // not exists
+							property = new PhraseProperty();
+							property.increaseTFSearchQuery()
+									.setNew(true)
+									.setForwardURL(getAPIMeta().getForwardURL());
+
+							getPhraseMap().put(token, property);
+						}
+					}
+				}
+			}
+
 		}
 
 		// tag part-of-speech, TF
