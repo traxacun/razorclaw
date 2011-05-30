@@ -1,12 +1,8 @@
 package razorclaw.ranker;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import razorclaw.datastore.DomainStoreHandler;
-import razorclaw.datastore.PhraseStoreHandler;
 import razorclaw.object.APIMeta;
 import razorclaw.object.PhraseProperty;
 import razorclaw.object.WebpageMeta;
@@ -23,22 +19,24 @@ public class BM25F {
 			_avgMetaKeywordsLength = 5.5, _avgMetaDescriptionLength = 10.5,
 			_avgH1Length = 5.5, _avgH2Length = 10.5, _avgContentLength = 123.5,
 			_avgAnchorLength = 4.5, _avgUserKeywordsLength = 3.0,
-			_avgAdminKeywordsLength = 3.0, _avgSpiderKeywordsLength = 3.0;
+			_avgAdminKeywordsLength = 3.0, _avgSpiderKeywordsLength = 3.0,
+			_avgSearchQueryLength = 2.5;
 
 	// length of phrases(number of characters)
 	private static final double _avgLength = 5.5;
 
-	private static final double _titleW = 10.0, _metaKeywordsW = 5.0,
-			_metaDescriptionW = 3.0, _anchorW = 5.0, _userKeywordsW = 30.0,
-			_adminKeywordsW = 20.0, _spiderKeywordsW = 1.0, _h1W = 2.0,
-			_h2W = 1.5, _contentW = 1.0, _lengthW = 1.0;
+	private static final double _titleW = 10.0, _metaKeywordsW = 1.5,
+			_metaDescriptionW = 1.0, _anchorW = 5.0, _userKeywordsW = 10.0,
+			_adminKeywordsW = 15.0, _spiderKeywordsW = 1.0, _h1W = 2.0,
+			_h2W = 1.5, _contentW = 1.0, _lengthW = 1.0, _searchQueryW = 5.0;
 
 	private static final double _contentB = 0.3, _titleB = 0.4,
 			_metaKeywordsB = 0.4, _metaDescriptionB = 0.4, _anchorB = 0.4,
 			_adminKeywordsB = 0.4, _spiderKeywordsB = 0.4,
-			_userKeywordsB = 0.4, _h1B = 0.4, _h2B = 0.4, _lengthB = 0.4;
+			_userKeywordsB = 0.4, _h1B = 0.4, _h2B = 0.4, _lengthB = 0.4,
+			_searchQueryB = 0.4;
 
-	private static final double _paraK = 4.9;
+	private static final double _paraK = 10;
 
 	/**
      * 
@@ -115,6 +113,11 @@ public class BM25F {
 								* apiMeta.getUserKeywords().size()
 								/ _avgUserKeywordsLength);
 			}
+			// -----------user keywords-------------
+			double searchQueryWeight = e.getValue().getTFSearchQuery()
+					* _searchQueryW
+					/ ((1 - _searchQueryB) + _searchQueryB
+							* e.getKey().length() / _avgSearchQueryLength);
 			// IDF
 			// ArrayList<PhraseProperty> properties = PhraseStoreHandler.get(e
 			// .getKey());
@@ -131,7 +134,8 @@ public class BM25F {
 			double weightScore = titleWeight + metaKeywordsWeight
 					+ metaDescriptionWeight + h1Weight + h2Weight
 					+ contentWeight + anchorTextWeight + spiderKeywordsWeight
-					+ adminKeywordsWeight + userKeywordsWeight + lengthWeight;
+					+ adminKeywordsWeight + userKeywordsWeight + lengthWeight
+					+ searchQueryWeight;
 
 			// saturation
 			double score = weightScore / (_paraK + weightScore);

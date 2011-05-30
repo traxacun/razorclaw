@@ -111,9 +111,9 @@ public class Main extends HttpServlet {
 
 			setStatus(Status.FINISHED);
 			// }
-		} catch (CacheException e) {
-			LOG.severe("Memcached failed");
-			LOG.severe("Generating keyphrase failed");
+			// } catch (CacheException e) {
+			// LOG.severe("Memcached failed");
+			// LOG.severe("Generating keyphrase failed");
 		} catch (IOException e) {
 			LOG.severe("Crawling stats.tk or webpage failed");
 			LOG.severe("Generating keyphrase failed");
@@ -132,6 +132,8 @@ public class Main extends HttpServlet {
 		List<Entry<String, PhraseProperty>> phrases = new LinkedList<Entry<String, PhraseProperty>>(
 				phraseMap.entrySet());
 		Collections.sort(phrases, new UniversalComparator());
+
+		// System.out.println(phrases);
 
 		// get the top 3
 		KeyPhrase keyPhrase = new KeyPhrase();

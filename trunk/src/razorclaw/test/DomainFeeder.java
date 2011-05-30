@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -24,12 +25,15 @@ public class DomainFeeder {
 
 	private static final String DOMAIN_LIST = "evaluation/0512.txt";
 
-	private static final String OUTPUT = "evaluation/0512.10";
+	private static final String OUTPUT = "evaluation/0512.5";
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		// start timer
+		Date timer = new Date();
+
 		ArrayList<KeyPhrase> keyPhrases = new ArrayList<KeyPhrase>();
 		ArrayList<String> domains = new ArrayList<String>();
 
@@ -53,7 +57,7 @@ public class DomainFeeder {
 
 		// access razorclaw
 		ExecutorService executor = java.util.concurrent.Executors
-				.newFixedThreadPool(10);
+				.newFixedThreadPool(5);
 		List<Callable<KeyPhrase>> tasks = new ArrayList<Callable<KeyPhrase>>();
 
 		for (String domain : domains) {
@@ -88,5 +92,11 @@ public class DomainFeeder {
 
 			e.printStackTrace();
 		}
+
+		// output timer
+		long timeCost = ((new Date()).getTime() - timer.getTime()) / 1000;
+		System.out.println(timeCost + " seconds, " + timeCost / domains.size()
+				+ " seconds per domain");
+
 	}
 }

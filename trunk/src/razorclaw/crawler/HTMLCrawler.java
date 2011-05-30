@@ -30,8 +30,8 @@ public class HTMLCrawler {
 
 	private static String _charset;
 
-	public static Webpage crawl(Webpage web) throws CacheException,
-			URISyntaxException, IOException {
+	public static Webpage crawl(Webpage web) throws URISyntaxException,
+			IOException {
 		String targetURL = web.getAPIMeta().getForwardURL();
 		LOG.info("Crawling webpage: " + targetURL);
 
