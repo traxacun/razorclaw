@@ -17,46 +17,43 @@ import opennlp.tools.util.InvalidFormatException;
  * 
  */
 public class OpenNLPPOSTagger {
-    private static final String POSTAGGER_MODEL = "model/en-pos-maxent.bin";
-    private static POSTagger _tagger = null;
+	private static final String POSTAGGER_MODEL = "model/en-pos-maxent.bin";
+	private static POSTagger _tagger = null;
 
-    private OpenNLPPOSTagger() {
-    }
-
-    /**
-     * load the POSTagger model if not already initialised
-     */
-    public static void init() {
-	if (_tagger == null) {
-	    try {
-		_tagger = new POSTaggerME(new POSModel(new FileInputStream(
-			POSTAGGER_MODEL)));
-	    } catch (InvalidFormatException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	    } catch (FileNotFoundException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	    } catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	    }
+	private OpenNLPPOSTagger() {
 	}
-    }
 
-    public static List<String> getWordsTags(List<String> words) {
-	if (_tagger == null) {
-	    init();
+	/**
+	 * load the POSTagger model if not already initialised
+	 */
+	public static void init() {
+		if (_tagger == null) {
+			try {
+				_tagger = new POSTaggerME(new POSModel(new FileInputStream(
+						POSTAGGER_MODEL)));
+			} catch (InvalidFormatException e) {
+				e.printStackTrace();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
-	return _tagger.tag(words);
-    }
 
-    public static String getWordTag(String word) {
-	if (_tagger == null) {
-	    init();
+	public static List<String> getWordsTags(List<String> words) {
+		if (_tagger == null) {
+			init();
+		}
+		return _tagger.tag(words);
 	}
-	String tag = _tagger.tag(word);
-	// trim to the tag only
-	return tag.substring(tag.indexOf("/") + 1);
-    }
+
+	public static String getWordTag(String word) {
+		if (_tagger == null) {
+			init();
+		}
+		String tag = _tagger.tag(word);
+		// trim to the tag only
+		return tag.substring(tag.indexOf("/") + 1);
+	}
 }

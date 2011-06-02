@@ -3,6 +3,8 @@ package razorclaw.ranker;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import razorclaw.datastore.DomainStoreHandler;
+import razorclaw.datastore.PhraseStoreHandler;
 import razorclaw.object.APIMeta;
 import razorclaw.object.PhraseProperty;
 import razorclaw.object.WebpageMeta;
@@ -28,13 +30,14 @@ public class BM25F {
 	private static final double _titleW = 10.0, _metaKeywordsW = 1.5,
 			_metaDescriptionW = 1.0, _anchorW = 5.0, _userKeywordsW = 10.0,
 			_adminKeywordsW = 15.0, _spiderKeywordsW = 1.0, _h1W = 2.0,
-			_h2W = 1.5, _contentW = 1.0, _lengthW = 1.0, _searchQueryW = 5.0;
+			_h2W = 1.5, _contentW = 1.0, _lengthW = 1.0, _searchQueryW = 5.0,
+			_POSW = 10.0;
 
 	private static final double _contentB = 0.3, _titleB = 0.4,
 			_metaKeywordsB = 0.4, _metaDescriptionB = 0.4, _anchorB = 0.4,
 			_adminKeywordsB = 0.4, _spiderKeywordsB = 0.4,
 			_userKeywordsB = 0.4, _h1B = 0.4, _h2B = 0.4, _lengthB = 0.4,
-			_searchQueryB = 0.4;
+			_searchQueryB = 0.4, _POSB = 0.4;
 
 	private static final double _paraK = 10;
 
@@ -118,30 +121,32 @@ public class BM25F {
 					* _searchQueryW
 					/ ((1 - _searchQueryB) + _searchQueryB
 							* e.getKey().length() / _avgSearchQueryLength);
+
+			// -------------part of speech-----------
+			double POSWeight = 0.0;
+			if (e.getValue().getPartOfSpeech().equals("NOUN")) {
+				POSWeight = 5.0;
+			}
 			// IDF
-			// ArrayList<PhraseProperty> properties = PhraseStoreHandler.get(e
-			// .getKey());
-			// int documentCount = 1;
-			// if (properties != null) {
-			// documentCount = properties.size();
-			// }
+			// TODO: resume after test
+			// long count = PhraseStoreHandler.get(e.getKey());
 			// double idfScore =
 			// Math.log((DomainStoreHandler.getDocumentsNumber()
-			// - documentCount + 0.1)
-			// / (documentCount + 0.1));
+			// - count + 0.1)
+			// / (count + 0.1));
 
 			// pseudo score
 			double weightScore = titleWeight + metaKeywordsWeight
 					+ metaDescriptionWeight + h1Weight + h2Weight
 					+ contentWeight + anchorTextWeight + spiderKeywordsWeight
 					+ adminKeywordsWeight + userKeywordsWeight + lengthWeight
-					+ searchQueryWeight;
+					+ searchQueryWeight + POSWeight;
 
 			// saturation
-			double score = weightScore / (_paraK + weightScore);
+			// double score = idfScore * weightScore / (_paraK + weightScore);
 
 			// record the score
-			e.getValue().setBM25FScore(score);
+			e.getValue().setBM25FScore(weightScore);
 
 			// output
 			// System.out.println(e.getKey() + ": " + score);

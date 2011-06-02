@@ -146,28 +146,6 @@ public class Main extends HttpServlet {
 		return keyPhrase;
 	}
 
-	/**
-	 * save reverse index to datastore
-	 * 
-	 * @param web
-	 */
-	private void saveIndex(Webpage web) {
-		try {
-			// save the phrases - forwardURL
-			for (Entry<String, PhraseProperty> e : web.getPhraseMap()
-					.entrySet()) {
-				PhraseStoreHandler.put(e.getKey(), e.getValue());
-			}
-
-			// save the webpage to datastore
-			DomainStoreHandler.put(web.getAPIMeta().getForwardURL(), _domain,
-					web.getWebpageMeta().getLanguage());
-
-		} catch (Exception e) {
-			LOG.severe("Save inverse document index failed");
-		}
-	}
-
 	// -----------getters and setters------------------
 	public void setStatus(Status _status) {
 		this._status = _status;
