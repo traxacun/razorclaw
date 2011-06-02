@@ -46,6 +46,8 @@ public class StatsAPI {
 			} catch (IOException e) {
 				// timeout exception
 				LOG.warning("Crawling metadata from stats.tk API failed");
+			} finally {
+				apiMeta.setDomainname(domain);
 			}
 		}
 

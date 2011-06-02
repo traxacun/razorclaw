@@ -22,6 +22,7 @@ import org.jsoup.select.Elements;
 import org.mozilla.intl.chardet.nsDetector;
 import org.mozilla.intl.chardet.nsICharsetDetectionObserver;
 
+import razorclaw.datastore.DomainStoreHandler;
 import razorclaw.object.Webpage;
 
 public class HTMLCrawler {
@@ -96,6 +97,10 @@ public class HTMLCrawler {
 		web.setText(doc.text());
 
 		// saveCache(targetURL, web);
+
+		// the domain is valid, save to datestore
+		// TODO: resume after test
+		// DomainStoreHandler.saveDomain(web.getAPIMeta().getDomainName());
 
 		return web;
 	}

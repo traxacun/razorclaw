@@ -9,6 +9,8 @@ import java.util.logging.Logger;
 
 import org.mozilla.intl.chardet.nsICharsetDetectionObserver;
 
+import razorclaw.datastore.DomainStoreHandler;
+import razorclaw.datastore.PhraseStoreHandler;
 import razorclaw.linguistic.parser.BasicTokenizer;
 import razorclaw.linguistic.parser.CJKVTokenizer;
 import razorclaw.linguistic.parser.OpenNLPPOSTagger;
@@ -281,50 +283,56 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 			}
 		}
 		// -------------------search keywords in referers--------------
-		for (String s : getAPIMeta().getReferers()) {
-			int startPos = s.indexOf("q=");
-			if (startPos == -1) {
-				continue;
-			}
-			int endPos = s.indexOf("&", startPos);
-			if (endPos == -1) {
-				continue;
-			}
-
-			String query = s.substring(startPos + 2, endPos);
-
-			if (query != null && !query.isEmpty()) {
-				String[] array = query.toLowerCase().split(" |\\+");
-				for (String token : array) {
-					if (TextUtils.isURL(token)) {
-						continue;
-					} else {
-						if (getPhraseMap().containsKey(token)) {
-							getPhraseMap().get(token).increaseTFSearchQuery();
-						} else { // not exists
-							property = new PhraseProperty();
-							property.increaseTFSearchQuery()
-									.setNew(true)
-									.setForwardURL(getAPIMeta().getForwardURL());
-
-							getPhraseMap().put(token, property);
-						}
-					}
-				}
-			}
-
-		}
+		// TODO: resume after solving the encoding problem
+		// for (String s : getAPIMeta().getReferers()) {
+		// int startPos = s.indexOf("q=");
+		// if (startPos == -1) {
+		// continue;
+		// }
+		// int endPos = s.indexOf("&", startPos);
+		// if (endPos == -1) {
+		// continue;
+		// }
+		//
+		// String query = s.substring(startPos + 2, endPos);
+		//
+		// if (query != null && !query.isEmpty()) {
+		// String[] array = query.toLowerCase().split(" |\\+");
+		// for (String token : array) {
+		// if (TextUtils.isURL(token)) {
+		// continue;
+		// } else {
+		// if (getPhraseMap().containsKey(token)) {
+		// getPhraseMap().get(token).increaseTFSearchQuery();
+		// } else { // not exists
+		// property = new PhraseProperty();
+		// property.increaseTFSearchQuery()
+		// .setNew(true)
+		// .setForwardURL(getAPIMeta().getForwardURL());
+		//
+		// getPhraseMap().put(token, property);
+		// }
+		// }
+		// }
+		// }
+		// }
 
 		// tag part-of-speech, TF
 		// @formatter:off
 		for (Entry<String, PhraseProperty> e : getPhraseMap().entrySet()) {
-			e.getValue()
-			// .setPartOfSpeech(
-			// PartOfSpeech.load(OpenNLPPOSTagger.getWordTag(e
-			// .getKey())))
-					.setTFScore(
-							(double) e.getValue().getTFContent()
-									/ getPhraseMap().size());
+			e.getValue().setTFScore(
+					(double) e.getValue().getTFContent()
+							/ getPhraseMap().size());
+
+			if (getWebpageMeta().getLanguage().equals("en")) {
+				e.getValue().setPartOfSpeech(
+						PartOfSpeech.load(OpenNLPPOSTagger.getWordTag(e
+								.getKey())));
+			}
+
+			// save the result to datastore for IDF
+			// TODO: resume after test
+			// PhraseStoreHandler.put(e.getKey(), getAPIMeta().getDomainName());
 		}
 		// @formatter:on
 	}

@@ -109,11 +109,9 @@ public class TextUtils {
 	 * @return
 	 */
 	public static boolean isURL(String text) {
-		try {
-			new URL(text);
-
+		if (text.contains("http://") || text.contains("https://")) {
 			return true;
-		} catch (Exception e) {
+		} else {
 			return false;
 		}
 	}

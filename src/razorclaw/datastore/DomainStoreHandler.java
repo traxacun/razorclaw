@@ -15,6 +15,7 @@ import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.FilterOperator;
 
 /**
  * save or load dot.tk domain entities from datastore. the structure is
@@ -109,18 +110,17 @@ public class DomainStoreHandler {
 	 * @param forwardURL
 	 * @param domain
 	 */
-	private static void saveDomain(String forwardURL, String domain,
-			String language) {
+	public static void saveDomain(String domain) {
 		LOG.info("Saving domains to datastore");
 
-		Entity pageEntity = new Entity("ForwardURL", forwardURL);
+		Entity e = new Entity("Domains", domain);
 		// pageEntity.setProperty("Name", forwardURL);
 
-		Entity domainEntity = new Entity("Domain", pageEntity.getKey());
-		domainEntity.setProperty("Name", domain);
-		domainEntity.setProperty("Language", language);
+		// Entity domainEntity = new Entity("Domain", pageEntity.getKey());
+		// domainEntity.setProperty("Name", domain);
+		// domainEntity.setProperty("Language", language);
 
-		_datastore.put(domainEntity);
+		_datastore.put(e);
 	}
 
 	/**
@@ -150,12 +150,24 @@ public class DomainStoreHandler {
 	 * @throws CacheException
 	 */
 	public static long getDocumentsNumber() {
-		synchronized (_cache) {
-			if (_cache == null || _cache.isEmpty()) {
-				load();
-			}
+		// synchronized (_cache) {
+		// if (_cache == null || _cache.isEmpty()) {
+		// load();
+		// }
+		//
+		// return _cache.size();
+		// }
 
-			return _cache.size();
+		// ---now we try to get document number from Datastore stats---
+		Query q = new Query("__Stat_Kind__");
+		q.addFilter("kind_name", FilterOperator.EQUAL, "Domains");
+
+		Entity stat = _datastore.prepare(q).asSingleEntity();
+
+		if (stat != null) {
+			return (Long) stat.getProperty("count");
+		} else {
+			return 0;
 		}
 	}
 
@@ -245,20 +257,20 @@ public class DomainStoreHandler {
 	 * @param forwardURL
 	 * @return
 	 */
-	public static ArrayList<SimpleDomainEntity> get(String forwardURL) {
-		if (_cache == null || _cache.isEmpty()) {
-			load();
-		}
-
-		synchronized (_cache) {
-			Object obj = _cache.get(forwardURL);
-			if (obj != null) {
-				return (ArrayList<SimpleDomainEntity>) obj;
-			} else {
-				return null;
-			}
-		}
-	}
+	// public static ArrayList<SimpleDomainEntity> get(String forwardURL) {
+	// if (_cache == null || _cache.isEmpty()) {
+	// load();
+	// }
+	//
+	// synchronized (_cache) {
+	// Object obj = _cache.get(forwardURL);
+	// if (obj != null) {
+	// return (ArrayList<SimpleDomainEntity>) obj;
+	// } else {
+	// return null;
+	// }
+	// }
+	// }
 
 	/**
 	 * get the KeyPhrase directly for the given dot.tk domain. cannot provide
@@ -303,7 +315,7 @@ public class DomainStoreHandler {
 				_cache.put(forwardURL, domains);
 
 				saveForwardURL(forwardURL);
-				saveDomain(forwardURL, domain, language);
+				// saveDomain(forwardURL, domain, language);
 			} else { // forwardURL exists
 				SimpleDomainEntity e = new SimpleDomainEntity(domain, language,
 						true);
@@ -313,7 +325,7 @@ public class DomainStoreHandler {
 				} else {
 					domains.add(e);
 
-					saveDomain(forwardURL, domain, language);
+					// saveDomain(forwardURL, domain, language);
 				}
 			}
 		}
