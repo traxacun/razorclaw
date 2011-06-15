@@ -52,7 +52,7 @@ public class StatsAPI {
 		}
 
 		// wrong format API response. user is using own DNS.
-		if (forwardURL == null) {
+		if (forwardURL == null || forwardURL.isEmpty()) {
 			LOG.warning("Using domain as the forwardURL");
 			apiMeta.setForwardurl("http://" + domain);
 		}

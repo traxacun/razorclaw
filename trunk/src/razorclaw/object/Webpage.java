@@ -331,8 +331,7 @@ public class Webpage implements Serializable, nsICharsetDetectionObserver {
 			}
 
 			// save the result to datastore for IDF
-			// TODO: resume after test
-			// PhraseStoreHandler.put(e.getKey(), getAPIMeta().getDomainName());
+//			PhraseStoreHandler.put(e.getKey());
 		}
 		// @formatter:on
 	}

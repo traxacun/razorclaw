@@ -1,11 +1,13 @@
 package razorclaw.ranker;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
 import razorclaw.datastore.DomainStoreHandler;
 import razorclaw.datastore.PhraseStoreHandler;
 import razorclaw.object.APIMeta;
+import razorclaw.object.KeyPhraseScore;
 import razorclaw.object.PhraseProperty;
 import razorclaw.object.WebpageMeta;
 
@@ -27,13 +29,20 @@ public class BM25F {
 	// length of phrases(number of characters)
 	private static final double _avgLength = 5.5;
 
-	private static final double _titleW = 10.0, _metaKeywordsW = 1.5,
-			_metaDescriptionW = 1.0, _anchorW = 5.0, _userKeywordsW = 10.0,
-			_adminKeywordsW = 15.0, _spiderKeywordsW = 1.0, _h1W = 2.0,
-			_h2W = 1.5, _contentW = 1.0, _lengthW = 1.0, _searchQueryW = 5.0,
-			_POSW = 10.0;
+	private static final double _titleW = 1.5, _metaKeywordsW = 1.0,
+			_metaDescriptionW = 1.0, _anchorW = 1.5, _userKeywordsW = 1.5,
+			_adminKeywordsW = 1.5, _spiderKeywordsW = 0.5, _h1W = 0.5,
+			_h2W = 0.5, _contentW = 0.5, _lengthW = 0.5, _searchQueryW = 1.0,
+			_POSW = 1.5;
 
-	private static final double _contentB = 0.3, _titleB = 0.4,
+	// 1st iteration
+	// private static final double _titleW = 1.0, _metaKeywordsW = 1.0,
+	// _metaDescriptionW = 1.0, _anchorW = 1.0, _userKeywordsW = 1.0,
+	// _adminKeywordsW = 1.0, _spiderKeywordsW = 1.0, _h1W = 1.0,
+	// _h2W = 1.0, _contentW = 1.0, _lengthW = 1.0, _searchQueryW = 1.0,
+	// _POSW = 1.0;
+
+	private static final double _contentB = 0.4, _titleB = 0.4,
 			_metaKeywordsB = 0.4, _metaDescriptionB = 0.4, _anchorB = 0.4,
 			_adminKeywordsB = 0.4, _spiderKeywordsB = 0.4,
 			_userKeywordsB = 0.4, _h1B = 0.4, _h2B = 0.4, _lengthB = 0.4,
@@ -44,112 +53,136 @@ public class BM25F {
 	/**
      * 
      */
-	public static void rank(WebpageMeta webpageMeta, APIMeta apiMeta,
+	public static ArrayList<KeyPhraseScore> rank(
+			WebpageMeta webpageMeta,
+			APIMeta apiMeta,
 			HashMap<String, PhraseProperty> phrases) {
+
+		ArrayList<KeyPhraseScore> ret = new ArrayList<KeyPhraseScore>();
 
 		// rank all phrases against the document
 		for (Entry<String, PhraseProperty> e : phrases.entrySet()) {
-			// weight on different features
+			KeyPhraseScore kps = new KeyPhraseScore();
+			kps.setPhrase(e.getKey());
+
+			// Score on different features
 			// ---------------length----------------
-			double lengthWeight = _lengthW
+			double lengthScore = _lengthW
 					/ ((1 - _lengthB) + _lengthB * _avgLength
 							/ e.getKey().length());
+			kps.setLengthScore(lengthScore);
 			// --------------title-------------------
-			double titleWeight = e.getValue().getTFTitle()
+			double titleScore = e.getValue().getTFTitle()
 					* _titleW
 					/ ((1 - _titleB) + _titleB * webpageMeta.getTitle().size()
 							/ _avgTitleLength);
+			kps.setTitleScore(titleScore);
 			// ---------------meta keywords---------------
-			double metaKeywordsWeight = e.getValue().getTFMetaKeywords()
+			double metaKeywordsScore = e.getValue().getTFMetaKeywords()
 					* _metaKeywordsW
 					/ ((1 - _metaKeywordsB) + _metaKeywordsB
 							* webpageMeta.getKeywords().size()
 							/ _avgMetaKeywordsLength);
+			kps.setMetaKeywordsScore(metaKeywordsScore);
 			// --------------meta description-----------------
-			double metaDescriptionWeight = e.getValue().getTFMetaDescription()
+			double metaDescriptionScore = e.getValue().getTFMetaDescription()
 					* _metaDescriptionW
 					/ ((1 - _metaDescriptionB) + _metaDescriptionB
 							* webpageMeta.getDescription().size()
 							/ _avgMetaDescriptionLength);
+			kps.setMetaDescriptionScore(metaDescriptionScore);
 			// ----------------------h1---------------------
-			double h1Weight = e.getValue().getTFH1()
+			double h1Score = e.getValue().getTFH1()
 					* _h1W
 					/ ((1 - _h1B) + _h1B * webpageMeta.getH1().size()
 							/ _avgH1Length);
+			kps.setH1Score(h1Score);
 			// ----------------------h2------------------
-			double h2Weight = e.getValue().getTFH2()
+			double h2Score = e.getValue().getTFH2()
 					* _h2W
 					/ ((1 - _h2B) + _h2B * webpageMeta.getH2().size()
 							/ _avgH2Length);
+			kps.setH2Score(h2Score);
 			// --------------------content-------------------
-			double contentWeight = e.getValue().getTFContent()
+			double contentScore = e.getValue().getTFContent()
 					* _contentW
 					/ ((1 - _contentB) + _contentB * phrases.size()
 							/ _avgContentLength);
+			kps.setContentScore(contentScore);
 			// ------------anchor text----------------
-			double anchorTextWeight = e.getValue().getTFAnchor()
+			double anchorTextScore = e.getValue().getTFAnchor()
 					* _anchorW
 					/ ((1 - _anchorB) + _anchorB
 							* apiMeta.getRefererAnchorTexts().size()
 							/ _avgAnchorLength);
+			kps.setAnchorTextScore(anchorTextScore);
 			// -----------spider keywords-------------
-			double spiderKeywordsWeight = 0.0;
+			double spiderKeywordsScore = 0.0;
 			if (e.getValue().isSpiderKeywords()) {
-				spiderKeywordsWeight = _spiderKeywordsW
+				spiderKeywordsScore = _spiderKeywordsW
 						/ ((1 - _spiderKeywordsB) + _spiderKeywordsB
 								* apiMeta.getSpiderKeywords().size()
 								/ _avgSpiderKeywordsLength);
 			}
+			kps.setSpiderKeywordsScore(spiderKeywordsScore);
 			// -----------admin keywords-------------
-			double adminKeywordsWeight = 0.0;
+			double adminKeywordsScore = 0.0;
 			if (e.getValue().isAdminKeywords()) {
-				adminKeywordsWeight = _adminKeywordsW
+				adminKeywordsScore = _adminKeywordsW
 						/ ((1 - _adminKeywordsB) + _adminKeywordsB
 								* apiMeta.getAdminKeywords().size()
 								/ _avgAdminKeywordsLength);
 			}
+			kps.setAdminKeywordsScore(adminKeywordsScore);
 			// -----------user keywords-------------
-			double userKeywordsWeight = 0.0;
+			double userKeywordsScore = 0.0;
 			if (e.getValue().isUserKeywords()) {
-				userKeywordsWeight = _userKeywordsW
+				userKeywordsScore = _userKeywordsW
 						/ ((1 - _userKeywordsB) + _userKeywordsB
 								* apiMeta.getUserKeywords().size()
 								/ _avgUserKeywordsLength);
 			}
-			// -----------user keywords-------------
-			double searchQueryWeight = e.getValue().getTFSearchQuery()
+			kps.setUserKeywordsScore(userKeywordsScore);
+			// -----------search query-------------
+			double searchQueryScore = e.getValue().getTFSearchQuery()
 					* _searchQueryW
 					/ ((1 - _searchQueryB) + _searchQueryB
 							* e.getKey().length() / _avgSearchQueryLength);
-
+			kps.setSearchQueryScore(searchQueryScore);
 			// -------------part of speech-----------
-			double POSWeight = 0.0;
+			double POSScore = 0.0;
 			if (e.getValue().getPartOfSpeech().equals("NOUN")) {
-				POSWeight = 5.0;
+				POSScore = _POSW;
 			}
+			kps.setPOSScore(POSScore);
+
 			// IDF
-			// TODO: resume after test
 			// long count = PhraseStoreHandler.get(e.getKey());
 			// double idfScore =
 			// Math.log((DomainStoreHandler.getDocumentsNumber()
 			// - count + 0.1)
 			// / (count + 0.1));
+			// kps.setIDFScore(idfScore);
 
 			// pseudo score
-			double weightScore = titleWeight + metaKeywordsWeight
-					+ metaDescriptionWeight + h1Weight + h2Weight
-					+ contentWeight + anchorTextWeight + spiderKeywordsWeight
-					+ adminKeywordsWeight + userKeywordsWeight + lengthWeight
-					+ searchQueryWeight + POSWeight;
+			double pseudoScore = titleScore + metaKeywordsScore
+					+ metaDescriptionScore + h1Score + h2Score + contentScore
+					+ anchorTextScore + spiderKeywordsScore
+					+ adminKeywordsScore + userKeywordsScore + lengthScore
+					+ searchQueryScore + POSScore;
+			kps.setPseudoScore(pseudoScore);
 
+			// double score = idfScore * pseudoScore;
+			kps.setBM25FScore(pseudoScore);
 			// saturation
 			// double score = idfScore * weightScore / (_paraK + weightScore);
 
 			// record the score
-			e.getValue().setBM25FScore(weightScore);
+			e.getValue().setBM25FScore(pseudoScore);
 
-			// output
-			// System.out.println(e.getKey() + ": " + score);
+			ret.add(kps);
 		}
+
+		return ret;
 	}
 }
