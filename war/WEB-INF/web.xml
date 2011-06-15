@@ -69,7 +69,7 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
             <role-name>admin</role-name>
         </auth-constraint>
     </security-constraint>
-
+<!--
 	<filter>
         <filter-name>appstats</filter-name>
         <filter-class>com.google.appengine.tools.appstats.AppstatsFilter</filter-class>
@@ -91,4 +91,5 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
         <servlet-name>appstats</servlet-name>
         <url-pattern>/appstats/*</url-pattern>
     </servlet-mapping>
+-->    
 </web-app>

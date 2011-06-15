@@ -46,8 +46,8 @@ public class HTMLCrawler {
 				url.getQuery(), null);
 
 		URLConnection conn = (new URL(uri.toString())).openConnection();
-		conn.setConnectTimeout(0); // 10 sec in GAE
-		conn.setReadTimeout(0);
+		conn.setConnectTimeout(30000); // 10 sec in GAE
+		conn.setReadTimeout(30000);
 		conn.setRequestProperty("UserAgent", "Chrome 11");
 
 		byte[] byteChunk = new byte[4096];
@@ -65,15 +65,20 @@ public class HTMLCrawler {
 		Elements meta = doc.getElementsByTag("meta");
 		_charset = "";
 		for (Element e : meta) {
-			if (e.hasAttr("http-equiv") && e.hasAttr("content")
-					&& e.attr("http-equiv").equalsIgnoreCase("Content-Type")) {
-				String s = e.attr("content");
-				_charset = s.substring(s.indexOf("charset=") + 8);
+			if (e.hasAttr("content") && e.attr("content").contains("charset=")) {
+				String s = e.attr("content").substring(
+						e.attr("content").indexOf("charset=") + 8);
 
-				web.getWebpageMeta().setCharset(_charset);
-				break;
+				if (s != null && !s.isEmpty()) {
+					s = s.trim();
+					if (s.substring(s.length() - 1).equals(";")) {
+						s = s.substring(s.length() - 1);
+					}
+					_charset = s;
+					web.getWebpageMeta().setCharset(s);
+					break;
+				}
 			}
-
 		}
 		if (_charset.isEmpty()) {
 			LOG.warning("Un-identified charset from HTML");
@@ -99,7 +104,6 @@ public class HTMLCrawler {
 		// saveCache(targetURL, web);
 
 		// the domain is valid, save to datestore
-		// TODO: resume after test
 		// DomainStoreHandler.saveDomain(web.getAPIMeta().getDomainName());
 
 		return web;

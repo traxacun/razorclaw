@@ -1,19 +1,16 @@
 package razorclaw.datastore;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.logging.Logger;
 
 import net.sf.jsr107cache.Cache;
+import net.sf.jsr107cache.CacheException;
 import net.sf.jsr107cache.CacheManager;
-import razorclaw.object.PhraseProperty;
-
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Query;
-import com.google.appengine.api.datastore.Query.FilterOperator;
+import com.google.appengine.api.datastore.AsyncDatastoreService;
 
 /**
  * save or load phrase entities from datastore
@@ -22,60 +19,60 @@ import com.google.appengine.api.datastore.Query.FilterOperator;
  * 
  */
 public class PhraseStoreHandler {
+	private static final Logger LOG = Logger.getLogger(PhraseStoreHandler.class
+			.getName());
 	/**
 	 * local memcache
 	 */
 	private static Cache _cache;
 
-	private static DatastoreService _datastore = DatastoreServiceFactory
+	private static DatastoreService _syncDatastore = DatastoreServiceFactory
 			.getDatastoreService();
 
+	private static AsyncDatastoreService _asyncDatastore = DatastoreServiceFactory
+			.getAsyncDatastoreService();
+
 	/**
-	 * add a new forwardURL for a phrase to the local cache
+	 * add a new phrase to the local cache and update datastore asynchronously
 	 * 
 	 * @param phrase
-	 * @param pp
 	 */
-	public static void put(String phrase, String domain) {
-		// if (phrase == null || phrase.isEmpty()) {
-		// return;
-		// }
-		//
-		// if (_cache == null || _cache.isEmpty()) {
-		// load();
-		// }
-		// synchronized (_cache) {
-		// Object obj = _cache.get(phrase);
-		// ArrayList<PhraseProperty> properties = null;
-		// if (obj != null) {
-		// properties = (ArrayList<PhraseProperty>) obj;
-		// }
-		//
-		// if (properties != null) { // phrase existing?
-		// if (properties.contains(pp)) { // forwardURL existing?
-		//
-		// } else { // new property
-		// properties.add(pp);
-		// _cache.put(phrase, properties);
-		// saveProperty(phrase, pp);
-		// }
-		// } else { // new phrase
-		// properties = new ArrayList<PhraseProperty>();
-		// pp.setNew(true);
-		// properties.add(pp);
-		// _cache.put(phrase, properties);
-		// savePhrase(phrase);
-		// saveProperty(phrase, pp);
-		// }
-		// }
+	public static void put(String phrase) {
+		if (phrase == null || phrase.isEmpty()) {
+			return;
+		}
 
-		// ---now store <Phrase, Domain> pair noly---
+		if (_cache == null || _cache.isEmpty()) {
+			try {
+				load();
+			} catch (CacheException e) {
+				e.printStackTrace();
+				LOG.severe("Loading phrase cache failed");
+
+				return;
+			}
+		}
+
+		long count = 0;
+		synchronized (_cache) {
+			Object obj = _cache.get(phrase);
+			if (obj != null) {
+				count = (Long) obj;
+			} else {
+				count = 0;
+			}
+			count++;
+
+			// no automatically overwrite?
+			_cache.remove(phrase);
+			_cache.put(phrase, count);
+		}
+
 		// use phrase as the key to automatically overwrite duplicates
 		Entity e = new Entity("Phrases", phrase);
-		e.setProperty("Domain", domain);
-		e.setProperty("Phrase", phrase);
+		e.setProperty("Count", count);
 
-		_datastore.put(e);
+		_asyncDatastore.put(e);
 	}
 
 	/**
@@ -85,30 +82,27 @@ public class PhraseStoreHandler {
 	 * @return
 	 */
 	public static long get(String phrase) {
-		// if (_cache == null || _cache.isEmpty()) {
-		// load();
-		// }
-		// synchronized (_cache) {
-		// Object obj = _cache.get(phrase);
-		// if (obj != null) {
-		// return (ArrayList<PhraseProperty>) obj;
-		// } else {
-		// return null;
-		// }
-		// }
+		if (_cache == null || _cache.isEmpty()) {
+			try {
+				load();
+			} catch (CacheException e) {
+				e.printStackTrace();
+				LOG.severe("Loading phrase cache failed");
 
-		long ret = 0;
-
-		// ---now get number of records with the same Phrase---
-		Query q = new Query("Phrases");
-		q.addFilter("Phrase", FilterOperator.EQUAL, phrase);
-		q.setKeysOnly();
-
-		for (Entity e : _datastore.prepare(q).asIterable()) {
-			ret++;
+				return 0;
+			}
+		}
+		long count = 0;
+		synchronized (_cache) {
+			Object obj = _cache.get(phrase);
+			if (obj != null) {
+				count = (Long) obj;
+			} else {
+				count = 0;
+			}
 		}
 
-		return ret;
+		return count;
 	}
 
 	// private static void save() {
@@ -131,79 +125,49 @@ public class PhraseStoreHandler {
 	// }
 	// }
 
-	private static void load() {
-		try {
-			// init local cache
-			if ((_cache = CacheManager.getInstance().getCache("phrases_cache")) == null) {
-				_cache = CacheManager.getInstance().getCacheFactory()
-						.createCache(Collections.emptyMap());
-				CacheManager.getInstance().registerCache("phrases_cache",
-						_cache);
-			}
-			// load from datastore
-			Query query = new Query("PhraseProperty");
-			// result could be huge
-			List<Entity> result = _datastore.prepare(query).asList(
-					FetchOptions.Builder.withDefaults());
+	private static void load() throws CacheException {
+		// init local cache
+		if ((_cache = CacheManager.getInstance().getCache("phrases_cache")) == null) {
+			_cache = CacheManager.getInstance().getCacheFactory()
+					.createCache(Collections.emptyMap());
+			CacheManager.getInstance().registerCache("phrases_cache", _cache);
+		}
+		// load from datastore
+		Query query = new Query("Phrases");
+		// result could be huge
+		for (Entity e : _syncDatastore.prepare(query).asIterable()) {
+			long count = (Long) e.getProperty("Count");
 
-			if (result != null) {
-				String phrase = null;
-				ArrayList<PhraseProperty> properties = null;
-
-				for (Entity e : result) {
-					if (phrase == null || phrase.isEmpty()) {
-						phrase = e.getParent().getName(); // phrase
-						properties = new ArrayList<PhraseProperty>();
-
-					} else if (phrase.equals(e.getParent().getName())) {
-
-					} else if (!phrase.equals(e.getParent().getName())) {
-						_cache.put(phrase, properties);
-
-						phrase = e.getParent().getName(); // phrase
-						properties = new ArrayList<PhraseProperty>();
-					}
-
-					PhraseProperty pp = new PhraseProperty();
-					// properties
-					pp.setForwardURL((String) e.getProperty("ForwardURL"));
-					pp.setNew(false);
-					properties.add(pp);
-				}
-				if (properties != null && !properties.isEmpty()) { // leftover
-					_cache.put(phrase, properties);
-				}
-			}
-		} catch (Exception e) {
-
+			_cache.put(e.getKey().getName(), count);
 		}
 
+		LOG.info("Phrase cache loaded");
 	}
-
-	private static void savePhrase(String phrase) {
-		Entity phraseEntity = new Entity("Phrase", phrase);
-		phraseEntity.setProperty("phrase", phrase);
-
-		_datastore.put(phraseEntity);
-	}
-
-	/**
-	 * save a new PhraseProperty entity to datastore
-	 * 
-	 * NOTE: duplicate check is ignored. checked at put().
-	 * 
-	 * @param phrase
-	 * @param pp
-	 */
-	private static void saveProperty(String phrase, PhraseProperty pp) {
-		Entity phraseEntity = new Entity("Phrase", phrase);
-
-		Entity propertyEntity = new Entity("PhraseProperty",
-				phraseEntity.getKey());
-		propertyEntity.setProperty("ForwardURL", pp.getForwardURL());
-
-		_datastore.put(propertyEntity);
-	}
+	//
+	// private static void savePhrase(String phrase) {
+	// Entity phraseEntity = new Entity("Phrase", phrase);
+	// phraseEntity.setProperty("phrase", phrase);
+	//
+	// _syncDatastore.put(phraseEntity);
+	// }
+	//
+	// /**
+	// * save a new PhraseProperty entity to datastore
+	// *
+	// * NOTE: duplicate check is ignored. checked at put().
+	// *
+	// * @param phrase
+	// * @param pp
+	// */
+	// private static void saveProperty(String phrase, PhraseProperty pp) {
+	// Entity phraseEntity = new Entity("Phrase", phrase);
+	//
+	// Entity propertyEntity = new Entity("PhraseProperty",
+	// phraseEntity.getKey());
+	// propertyEntity.setProperty("ForwardURL", pp.getForwardURL());
+	//
+	// _syncDatastore.put(propertyEntity);
+	// }
 
 	// private static void updateAccessCounter() {
 	// _accessCounter++;

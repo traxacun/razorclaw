@@ -5,11 +5,19 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 import org.wltea.analyzer.IKSegmentation;
 import org.wltea.analyzer.Lexeme;
 
+/**
+ * @author Shuai Yuan
+ * 
+ */
 public class CJKVTokenizer {
+	private static final Logger LOG = Logger.getLogger(CJKVTokenizer.class
+			.getName());
+
 	private static final String CHINESE_DICT = "IKAnalyzer/chinese.u8";
 	private static final String JAPANESE_DICT = "IKAnalyzer/japanese.u8";
 	private static final String KOREAN_DICT = "IKAnalyzer/korean.u8";
@@ -74,5 +82,7 @@ public class CJKVTokenizer {
 		extWords.clear();
 
 		_initialzied = true;
+
+		LOG.info("CJKV parser loaded");
 	}
 }

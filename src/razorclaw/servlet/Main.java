@@ -2,6 +2,7 @@ package razorclaw.servlet;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -20,6 +21,7 @@ import razorclaw.datastore.DomainStoreHandler;
 import razorclaw.datastore.PhraseStoreHandler;
 import razorclaw.object.APIMeta;
 import razorclaw.object.Dictionaries.Status;
+import razorclaw.object.KeyPhraseScore;
 import razorclaw.object.PhraseProperty;
 import razorclaw.object.Webpage;
 import razorclaw.object.WebpageMeta;
@@ -33,11 +35,6 @@ public class Main extends HttpServlet {
 	private static final long serialVersionUID = 3455350955823075513L;
 
 	private static final Logger LOG = Logger.getLogger(Main.class.getName());
-
-	// input
-	private String _domain;
-
-	private Status _status;
 
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -53,67 +50,51 @@ public class Main extends HttpServlet {
 
 	public void doExecute(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
-		if ((_domain = req.getParameter("domain")) == null) {
+		String domain = "";
+		if ((domain = req.getParameter("domain")) == null) {
 			LOG.severe("Wrong parameter \"domain\"");
 			return;
 		}
 
 		// CrawlTaskHandler.createCrawlTask(req.getParameter("domain"));
-		_domain = _domain.toLowerCase();
+		domain = domain.toLowerCase();
 
 		try {
-			setStatus(Status.CRAWLING);
 			// ------------crawl part-----------------
 			Webpage web = new Webpage();
-			APIMeta apiMeta = StatsAPI.crawl(_domain);
+			APIMeta apiMeta = StatsAPI.crawl(domain);
 			WebpageMeta webpageMeta = new WebpageMeta();
 			web.setWebpageMeta(webpageMeta);
 			web.setAPIMeta(apiMeta);
 
 			web = HTMLCrawler.crawl(web);
-
-			setStatus(Status.CRAWLED);
 			// -------------parse part----------------
-			setStatus(Status.PARSING);
 
 			// detect language
-			String lang = TextUtils.detectLanguage(web.getText());
-			web.getWebpageMeta().setLanguage(lang);
+			// String lang = TextUtils.detectLanguage(web.getText());
+			// web.getWebpageMeta().setLanguage(lang);
+
+			// TODO force parser
+			web.getWebpageMeta().setLanguage("en");
 
 			web.parse();
-
-			// --------always save inverse document index ------------
-			// LOG.info("Saving inverse document index");
-			// saveIndex(web);
-
-			// if (req.getParameter("buildIndex") != null
-			// && req.getParameter("buildIndex").equals("1")) {
-			//
-			// } else {
-			// -------------rank part-----------------
-			setStatus(Status.RANKING);
-
-			LOG.info("Ranking phrases");
-			BM25F.rank(web.getWebpageMeta(), web.getAPIMeta(),
-					web.getPhraseMap());
-
-			setStatus(Status.RANKED);
+			// -------------rank-----------------
+			ArrayList<KeyPhraseScore> rankResult = BM25F.rank(
+					web.getWebpageMeta(), web.getAPIMeta(), web.getPhraseMap());
 			// -------------sort and output------------
-			KeyPhrase keyPhrase = sort(web.getPhraseMap());
+			ArrayList<KeyPhraseScore> sortResult = sort(rankResult);
 
-			System.out.println(keyPhrase.getKeyphrase());
+			KeyPhrase result = new KeyPhrase();
+			for (KeyPhraseScore kps : sortResult) {
+				result.appendKeyPhrase(kps.getPhrase());
+			}
 
-			String result = JSON.encode(keyPhrase);
+			// console output for review
+			System.out.println(result.getKeyphrase());
+
 			resp.setContentType("text/html; charset=UTF-8");
 			resp.setCharacterEncoding("UTF-8");
-
-			resp.getWriter().println(result);
-
-			setStatus(Status.FINISHED);
-			// }
-			// } catch (CacheException e) {
-			// LOG.severe("Memcached failed");
-			// LOG.severe("Generating keyphrase failed");
+			resp.getWriter().println(JSON.encode(result));
 		} catch (IOException e) {
 			LOG.severe("Crawling stats.tk or webpage failed");
 			LOG.severe("Generating keyphrase failed");
@@ -128,31 +109,16 @@ public class Main extends HttpServlet {
 	 * 
 	 * @param phraseMap
 	 */
-	private KeyPhrase sort(HashMap<String, PhraseProperty> phraseMap) {
-		List<Entry<String, PhraseProperty>> phrases = new LinkedList<Entry<String, PhraseProperty>>(
-				phraseMap.entrySet());
-		Collections.sort(phrases, new UniversalComparator());
+	private ArrayList<KeyPhraseScore> sort(List<KeyPhraseScore> rankResult) {
+		Collections.sort(rankResult, new UniversalComparator());
 
-		// System.out.println(phrases);
+		ArrayList<KeyPhraseScore> ret = new ArrayList<KeyPhraseScore>();
 
-		// get the top 3
-		KeyPhrase keyPhrase = new KeyPhrase();
-		keyPhrase.setDomain(_domain);
-
-		for (int i = 0; i < 3 && i < phrases.size(); i++) {
-			keyPhrase.appendKeyPhrase(phrases.get(i).getKey());
+		// get the top 5
+		for (int i = 0; i < 5 && i < rankResult.size(); i++) {
+			ret.add(rankResult.get(i));
 		}
 
-		return keyPhrase;
+		return ret;
 	}
-
-	// -----------getters and setters------------------
-	public void setStatus(Status _status) {
-		this._status = _status;
-	}
-
-	public Status getStatus() {
-		return _status;
-	}
-
 }

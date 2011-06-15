@@ -28,6 +28,17 @@ public class APIMeta implements Serializable {
 
 	private String _registeredFrom;
 
+	public APIMeta() {
+		_adminKeywords = new ArrayList<String>();
+		_userKeywords = new ArrayList<String>();
+		_referers = new ArrayList<String>();
+
+		_visitorCountries = new ArrayList<APIMeta.VisitorCountry>();
+		_refererAnchorTexts = new ArrayList<APIMeta.RefererAnchorText>();
+
+		_spiderKeywords = _forwardURL = _domainName = _registeredFrom = "";
+	}
+
 	public class VisitorCountry implements Serializable {
 		private static final long serialVersionUID = -3100128939029338347L;
 		private String _country;
